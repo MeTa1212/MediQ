@@ -1,6 +1,27 @@
 import { useState } from "react";
 import { X, Plus } from "lucide-react";
-import { Patient, Medicine, MEDICINE_DB } from "@/data/mockData";
+export interface Medicine {
+  name: string;
+  dose: string;
+  freq: string;
+  days: number;
+}
+
+export interface Patient {
+  id: string;
+  name: string;
+  token: string;
+  age?: number;
+  symptoms: string;
+  diagnosis?: string;
+  medicines?: Medicine[];
+}
+
+const MEDICINE_DB = [
+  "Paracetamol 500mg", "Amoxicillin 250mg", "Ibuprofen 400mg", "Azithromycin 500mg",
+  "Cetirizine 10mg", "Pantoprazole 40mg", "Vitamin C 500mg", "Cough Syrup",
+  "Aspirin 75mg", "Metformin 500mg", "Atorvastatin 10mg"
+];
 
 interface PrescriptionModalProps {
   patient: Patient;

@@ -1,151 +1,222 @@
-import { Patient, PRIORITY_META, STATUS_META } from "@/data/mockData";
-import { StatCard } from "@/components/StatCard";
+import { Play, SkipForward, CheckCircle2, FileText } from "lucide-react";
+import type { QueuePatient } from "@/hooks/useQueue";
+const PRIORITYMETA: Record<"critical" | "normal" | "low", string> = {
+  critical: "bg-red-500/10 text-red-400 border border-red-500/20",
+  normal: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+  low: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+};
+
+const STATUSMETA: Record<string, string> = {
+  waiting: "bg-slate-500/10 text-slate-300 border border-slate-500/20",
+  serving: "bg-sky-500/10 text-sky-300 border border-sky-500/20",
+  done: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
+  cancelled: "bg-rose-500/10 text-rose-300 border border-rose-500/20",
+  no_show: "bg-zinc-500/10 text-zinc-300 border border-zinc-500/20",
+};
 import { BadgeChip } from "@/components/BadgeChip";
-import { ArrowRight, SkipForward, CheckCircle, Phone, Clock } from "lucide-react";
 
 interface QueueTabProps {
-  patients: Patient[];
-  waiting: Patient[];
-  serving: Patient | undefined;
-  done: Patient[];
-  sortedWait: Patient[];
-  callNext: () => string | null;
-  onPrescribe: (p: Patient) => void;
-  onChangePriority: (id: number, priority: "critical" | "normal" | "low") => void;
-  onSkip: (id: number) => void;
-  onComplete: (id: number) => void;
+  patients: QueuePatient[];
+  waiting: QueuePatient[];
+  serving?: QueuePatient;
+  done: QueuePatient[];
+  sortedWait: QueuePatient[];
+  callNext: () => Promise<void>;
+  onPrescribe: (p: QueuePatient) => void;
+  onChangePriority: (
+    id: string,
+    priority: "critical" | "normal" | "low"
+  ) => Promise<void>;
+  onSkip: (id: string) => Promise<void>;
+  onComplete: (id: string) => Promise<void>;
 }
 
-export function QueueTab({ patients, waiting, done, serving, sortedWait, callNext, onPrescribe, onChangePriority, onSkip, onComplete }: QueueTabProps) {
+export function QueueTab({
+  waiting,
+  serving,
+  done,
+  sortedWait,
+  callNext,
+  onPrescribe,
+  onChangePriority,
+  onSkip,
+  onComplete,
+}: QueueTabProps) {
   return (
-    <div className="animate-fade-up space-y-5">
-      <div>
-        <h1 className="font-extrabold text-foreground text-2xl">Queue Management</h1>
-        <p className="text-muted-foreground text-sm mt-1">Manage patient flow and consultations</p>
+    <div className="space-y-6 animate-fade-up">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Queue Management</h2>
+          <p className="text-sm text-muted-foreground">
+            Manage live patient flow for today
+          </p>
+        </div>
+
+        <button
+          onClick={callNext}
+          className="inline-flex items-center gap-2 rounded-xl gradient-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.02]"
+        >
+          <Play className="h-4 w-4" />
+          Call Next
+        </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard icon={<span className="text-xl">👥</span>} label="Total Today" value={patients.length} variant="primary" />
-        <StatCard icon={<span className="text-xl">⏳</span>} label="Waiting" value={waiting.length} variant="warning" />
-        <StatCard icon={<span className="text-xl">✅</span>} label="Completed" value={done.length} variant="success" />
-        <StatCard icon={<span className="text-xl">🚨</span>} label="Critical" value={patients.filter(p => p.priority === "critical").length} variant="destructive" />
-      </div>
-
-      {/* Now Serving Banner */}
-      <div className="rounded-2xl overflow-hidden shadow-lg">
-        <div className="gradient-violet p-5 text-violet-foreground">
-          <div className="flex items-center justify-between gap-4">
+      {serving && (
+        <div className="rounded-2xl border border-primary/20 bg-primary/10 p-5 shadow-card">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary">
+            Now Serving
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-widest mb-1 opacity-70">🔔 Now Serving</div>
-              {serving ? (
-                <>
-                  <div className="font-extrabold text-2xl">{serving.token}</div>
-                  <div className="font-semibold text-base mt-0.5">{serving.name}</div>
-                  <div className="text-sm mt-1 opacity-70 line-clamp-1">{serving.symptoms}</div>
-                </>
-              ) : (
-                <div className="font-semibold text-lg opacity-80">No patient currently being served</div>
-              )}
+              <div className="text-lg font-bold text-foreground">
+                {serving.token_number} · {serving.patient_name}
+              </div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {serving.symptom_tags.length > 0
+                  ? serving.symptom_tags.join(", ")
+                  : serving.custom_symptoms || "No symptoms"}
+              </div>
             </div>
-            <div className="flex flex-col gap-2 shrink-0">
-              {serving && (
-                <button onClick={() => onPrescribe(serving)} className="bg-card text-violet font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-secondary transition-colors whitespace-nowrap shadow-sm">
-                  Write Rx
-                </button>
-              )}
-              <button onClick={callNext} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-card/20 backdrop-blur text-violet-foreground font-semibold text-sm hover:bg-card/30 transition-colors whitespace-nowrap">
-                <Phone className="w-3.5 h-3.5" /> Call Next
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onPrescribe(serving)}
+                className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-background px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/5"
+              >
+                <FileText className="h-4 w-4" />
+                Prescribe
+              </button>
+
+              <button
+                onClick={() => onComplete(serving.id)}
+                className="inline-flex items-center gap-2 rounded-xl border border-success/20 bg-success/10 px-4 py-2 text-sm font-medium text-success transition-colors hover:bg-success/15"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Complete
               </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Queue Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-bold text-foreground text-lg">Patient Queue</h2>
-          <p className="text-muted-foreground text-xs mt-0.5">Sorted by priority · {sortedWait.length} patients waiting</p>
-        </div>
-        <button onClick={callNext} className="flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-primary text-primary-foreground font-semibold text-sm shadow-md hover:shadow-lg hover:scale-105 transition-all">
-          Call Next <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Queue Table */}
-      <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-secondary/50">
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">#</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Token</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Patient Name</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Priority</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Est. Wait</th>
-                <th className="text-right px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedWait.map((p, i) => {
-                const pm = PRIORITY_META[p.priority];
-                return (
-                  <tr key={p.id} className={`border-b border-border/50 last:border-0 hover:bg-secondary/30 transition-colors animate-slide-in ${i === 0 ? "bg-primary/5" : ""}`}>
-                    <td className="px-5 py-4 font-bold text-muted-foreground/50 text-lg">{i + 1}</td>
-                    <td className="px-5 py-4 font-mono font-semibold text-foreground text-sm">{p.token}</td>
-                    <td className="px-5 py-4">
-                      <div className="font-semibold text-foreground text-sm">{p.name}</div>
-                      <div className="text-muted-foreground text-xs mt-0.5 line-clamp-1 max-w-[200px]">{p.symptoms}</div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <BadgeChip className={STATUS_META[p.status].badgeClass}>
-                        {STATUS_META[p.status].label}
-                      </BadgeChip>
-                    </td>
-                    <td className="px-5 py-4">
-                      <select value={p.priority} onChange={e => onChangePriority(p.id, e.target.value as "critical" | "normal" | "low")}
-                        className="text-xs border border-border rounded-lg px-2 py-1.5 bg-secondary text-foreground font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20">
-                        <option value="critical">Critical</option>
-                        <option value="normal">Normal</option>
-                        <option value="low">Low</option>
-                      </select>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                        <Clock className="w-3 h-3" /> ~{p.waitMins} min
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-1.5 justify-end">
-                        <button onClick={callNext} title="Call Next" className="px-3 py-1.5 rounded-lg gradient-primary text-primary-foreground text-xs font-semibold hover:shadow-md transition-all">
-                          Call
-                        </button>
-                        <button onClick={() => onSkip(p.id)} title="Skip" className="px-3 py-1.5 rounded-lg bg-warning/10 text-warning border border-warning/20 text-xs font-semibold hover:bg-warning/20 transition-colors">
-                          <SkipForward className="w-3 h-3" />
-                        </button>
-                        <button onClick={() => onComplete(p.id)} title="Complete" className="px-3 py-1.5 rounded-lg bg-success/10 text-success border border-success/20 text-xs font-semibold hover:bg-success/20 transition-colors">
-                          <CheckCircle className="w-3 h-3" />
-                        </button>
-                        <button onClick={() => onPrescribe(p)} className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-semibold hover:bg-primary/20 transition-colors">
-                          Rx
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        {sortedWait.length === 0 && (
-          <div className="text-center py-16 text-muted-foreground">
-            <div className="text-5xl mb-3">✓</div>
-            <div className="font-semibold">Queue is empty</div>
-            <div className="text-sm mt-1">All patients have been seen</div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 backdrop-blur-md shadow-[0_16px_40px_rgba(0,0,0,0.2)] p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-semibold text-foreground">Waiting Queue</h3>
+            <span className="text-xs text-muted-foreground">
+              {waiting.length} patients
+            </span>
           </div>
-        )}
+
+          <div className="space-y-3">
+            {sortedWait.length === 0 ? (
+              <div className="rounded-xl bg-secondary px-4 py-8 text-center text-sm text-muted-foreground">
+                No patients waiting.
+              </div>
+            ) : (
+              sortedWait.map((p) => (
+                <div
+                  key={p.id}
+                  className="rounded-xl border border-border bg-background p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-foreground">
+                        {p.token_number} · {p.patient_name}
+                      </div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        {p.symptom_tags.length > 0
+                          ? p.symptom_tags.join(", ")
+                          : p.custom_symptoms || "No symptoms"}
+                      </div>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Wait: {p.estimated_wait_minutes ?? 0} mins
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2">
+                      <BadgeChip className={PRIORITYMETA[p.priority]}>
+                        {p.priority}
+                      </BadgeChip>
+                      <BadgeChip className={STATUSMETA[p.status]}>
+                        {p.status}
+                      </BadgeChip>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <select
+                      value={p.priority}
+                      onChange={(e) =>
+                        onChangePriority(
+                          p.id,
+                          e.target.value as "critical" | "normal" | "low"
+                        )
+                      }
+                      className="rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground outline-none"
+                    >
+                      <option value="critical">Critical</option>
+                      <option value="normal">Normal</option>
+                      <option value="low">Low</option>
+                    </select>
+
+                    <button
+                      onClick={() => onSkip(p.id)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary/80"
+                    >
+                      <SkipForward className="h-3.5 w-3.5" />
+                      Skip
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 backdrop-blur-md shadow-[0_16px_40px_rgba(0,0,0,0.2)] p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-semibold text-foreground">Completed</h3>
+            <span className="text-xs text-muted-foreground">
+              {done.length} patients
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {done.length === 0 ? (
+              <div className="rounded-xl bg-secondary px-4 py-8 text-center text-sm text-muted-foreground">
+                No completed consultations yet.
+              </div>
+            ) : (
+              done.map((p) => (
+                <div
+                  key={p.id}
+                  className="rounded-xl border border-border bg-background p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-foreground">
+                        {p.token_number} · {p.patient_name}
+                      </div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        {p.completed_at
+                          ? new Date(p.completed_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "Completed"}
+                      </div>
+                    </div>
+
+                    <BadgeChip className={STATUSMETA[p.status]}>
+                      {p.status}
+                    </BadgeChip>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

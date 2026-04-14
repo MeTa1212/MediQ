@@ -103,7 +103,7 @@ export default function SignUp() {
                 className="group flex items-center rounded-[24px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)] backdrop-blur-md transition-all hover:border-sky-400/30 hover:bg-white/[0.08] hover:shadow-sky-500/10"
               >
                 <div className="mr-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-400/10 text-sky-300 ring-1 ring-sky-300/15 transition-transform duration-300 group-hover:scale-110">
-                  <Stethoscope className="h-6 w-6" />
+                   <Stethoscope className="h-6 w-6" />
                 </div>
 
                 <div className="flex-1">
@@ -121,7 +121,7 @@ export default function SignUp() {
                 className="group flex items-center rounded-[24px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)] backdrop-blur-md transition-all hover:border-emerald-400/30 hover:bg-white/[0.08] hover:shadow-emerald-500/10"
               >
                 <div className="mr-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-300/15 transition-transform duration-300 group-hover:scale-110">
-                  <Smartphone className="h-6 w-6" />
+                   <Smartphone className="h-6 w-6" />
                 </div>
 
                 <div className="flex-1">
@@ -135,15 +135,17 @@ export default function SignUp() {
               </Link>
             </div>
 
-            <p className="mt-8 text-center text-sm text-white/55">
-              Already have an account?{" "}
-              <Link
-                to="/login/patient"
-                className="font-semibold text-white transition hover:text-white/80"
-              >
-                Sign In
-              </Link>
-            </p>
+            <div className="flex flex-col items-center gap-3 mt-8">
+              <p className="text-sm text-white/55">
+                Already have an account?{" "}
+                <Link
+                  to="/login/patient"
+                  className="font-semibold text-white transition hover:text-white/80"
+                >
+                  Sign In
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function DoctorLogin() {
@@ -12,7 +13,9 @@ export default function DoctorLogin() {
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -27,21 +30,33 @@ export default function DoctorLogin() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsSubmitting(true);
 
     try {
-      await login(formData.email, formData.password);
-      navigate("/doctor");
+      const profile = await login(formData.email, formData.password);
+      
+      if (profile?.role === "admin") {
+         navigate("/admin", { replace: true });
+      } else {
+         navigate("/doctor", { replace: true });
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Login failed");
+        setError("Login failed. Please check your credentials.");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <AuthLayout theme="doctor">
+    <AuthLayout 
+      theme="doctor"
+      isLoading={isSubmitting}
+      loadingMessage="Verifying credentials..."
+    >
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
           Welcome back
@@ -71,15 +86,24 @@ export default function DoctorLogin() {
           <Label htmlFor="password" className="text-white/80">
             Password
           </Label>
-          <Input
-            id="password"
-            type="password"
-            required
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Your password"
-            className="h-14 rounded-2xl border border-zinc-300/10 bg-transparent text-white placeholder:text-white/25 transition-all duration-300 focus:border-blue-400/40 focus:bg-white/[0.02] focus:ring-0"
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              required
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Your password"
+              className="h-14 rounded-2xl border border-zinc-300/10 bg-transparent text-white placeholder:text-white/25 transition-all duration-300 focus:border-blue-400/40 focus:bg-white/[0.02] focus:ring-0 pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center justify-between pt-1">
@@ -94,13 +118,18 @@ export default function DoctorLogin() {
           </div>
         </div>
 
-        {error && <p className="text-sm text-red-300">{error}</p>}
+        {error && (
+          <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3">
+            <p className="text-sm text-rose-300">{error}</p>
+          </div>
+        )}
 
         <Button
           type="submit"
-          className="h-14 w-full rounded-2xl border border-blue-400/40 bg-blue-600 text-base font-semibold text-white shadow-none transition-all duration-300 hover:border-blue-300/60 hover:bg-blue-500"
+          disabled={isSubmitting}
+          className="h-14 w-full rounded-2xl border border-blue-400/40 bg-blue-600 text-base font-semibold text-white shadow-none transition-all duration-300 hover:border-blue-300/60 hover:bg-blue-500 disabled:opacity-60"
         >
-          Login
+          {isSubmitting ? "Signing in..." : "Sign In"}
         </Button>
       </form>
 

@@ -17,13 +17,14 @@ const variantClasses = {
 
 export function StatCard({ icon, label, value, subtitle, variant = "primary" }: StatCardProps) {
   return (
-    <div className={`rounded-2xl p-4 border animate-fade-up ${variantClasses[variant]}`}>
+    <div className={`relative overflow-hidden rounded-[24px] p-5 border backdrop-blur-xl shadow-lg hover:-translate-y-1 hover:shadow-xl transition-all duration-300 animate-fade-up ${variantClasses[variant]}`}>
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
       <div className="flex items-start justify-between mb-3">
         <span className="text-xl">{icon}</span>
         {subtitle && <span className="text-xs font-medium opacity-70">{subtitle}</span>}
       </div>
-      <div className="text-2xl font-extrabold leading-none mb-1">{value}</div>
-      <div className="text-xs font-medium opacity-70">{label}</div>
+      <div className="text-3xl font-black tracking-tight leading-none mb-1 shadow-sm">{value}</div>
+      <div className="text-xs tracking-wider uppercase font-bold opacity-70">{label}</div>
     </div>
   );
 }

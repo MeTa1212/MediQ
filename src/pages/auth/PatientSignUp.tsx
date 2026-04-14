@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function PatientSignUp() {
@@ -102,6 +103,8 @@ export default function PatientSignUp() {
       theme="patient"
       title="Patient Registration"
       subtitle="Create your account to access appointments, queue updates, prescriptions, and health records."
+      isLoading={loading}
+      loadingMessage="Creating your account..."
     >
       <form onSubmit={handleSignUp} className="space-y-5">
         <div className="space-y-2">
@@ -156,20 +159,11 @@ export default function PatientSignUp() {
           <Label htmlFor="password" className="text-white/85">
             Password
           </Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
-            placeholder="Create a password"
             value={formData.password}
             onChange={handleChange}
-            required
-            minLength={6}
-            disabled={loading}
-            className="h-12 border-white/10 bg-white/5 text-white placeholder:text-white/35 focus:border-emerald-400/40 focus:ring-emerald-400/40"
           />
-          <p className="text-xs text-white/45">
-            Password must be at least 6 characters.
-          </p>
         </div>
 
         <div className="space-y-2">

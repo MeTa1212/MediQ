@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function DoctorSignUp() {
@@ -16,6 +17,7 @@ export default function DoctorSignUp() {
     password: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
   const { signUp } = useAuth();
@@ -25,6 +27,7 @@ export default function DoctorSignUp() {
     setError(null);
 
     try {
+      setLoading(true);
       await signUp("doctor", {
         fullName: formData.name,
         email: formData.email,
@@ -32,7 +35,9 @@ export default function DoctorSignUp() {
         specialty: formData.specialty,
         password: formData.password,
       });
-      navigate("/login/doctor");
+      // After signup, Supabase auto-logs in the user. 
+      // Navigating to /doctor will trigger the ProtectedRoute's "Approval Pending" screen.
+      navigate("/doctor");
     } catch (err: unknown) {
       console.error("Signup error:", err);
       if (err instanceof Error) {
@@ -40,6 +45,8 @@ export default function DoctorSignUp() {
       } else {
         setError("Signup failed");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,6 +59,8 @@ export default function DoctorSignUp() {
       theme="doctor"
       title="Provider Registration"
       subtitle="Join our network of healthcare professionals"
+      isLoading={loading}
+      loadingMessage="Creating provider account..."
     >
       <form onSubmit={handleSignUp} className="space-y-5">
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -118,14 +127,10 @@ export default function DoctorSignUp() {
           <Label htmlFor="password" className="text-white/80">
             Password
           </Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
-            required
             value={formData.password}
             onChange={handleChange}
-            placeholder="Create a strong password"
-            className="h-14 rounded-2xl border border-zinc-300/10 bg-transparent text-white placeholder:text-white/25 transition-all duration-300 focus:border-blue-400/40 focus:bg-white/[0.02] focus:ring-0"
           />
         </div>
 

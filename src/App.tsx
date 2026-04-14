@@ -8,6 +8,7 @@ import Landing from "./pages/Landing";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import PatientApp from "./pages/PatientApp";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/AdminDashboard";
 
 import DoctorLogin from "./pages/auth/DoctorLogin";
 import DoctorSignUp from "./pages/auth/DoctorSignUp";
@@ -28,6 +29,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/login/admin" element={<DoctorLogin />} />
+          <Route path="/admin/login" element={<DoctorLogin />} />
           <Route path="/login/doctor" element={<DoctorLogin />} />
           <Route path="/signup/doctor" element={<DoctorSignUp />} />
           <Route path="/login/patient" element={<PatientLogin />} />
@@ -47,6 +50,15 @@ const App = () => (
             element={
               <ProtectedRoute allowedRole="patient">
                 <PatientApp />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRole="admin">
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />

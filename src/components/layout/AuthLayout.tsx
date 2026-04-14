@@ -1,12 +1,15 @@
 import { ReactNode, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, HeartPulse, ShieldCheck, Stethoscope } from "lucide-react";
+import { MedicalLoader } from "@/components/MedicalLoader";
 
 interface AuthLayoutProps {
   children: ReactNode;
   theme?: "doctor" | "patient";
   title?: string;
   subtitle?: string;
+  isLoading?: boolean;
+  loadingMessage?: string;
 }
 
 type Orb = {
@@ -28,6 +31,8 @@ export default function AuthLayout({
   theme = "patient",
   title,
   subtitle,
+  isLoading = false,
+  loadingMessage = "Authenticating...",
 }: AuthLayoutProps) {
   const isDoctor = theme === "doctor";
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -399,8 +404,15 @@ export default function AuthLayout({
                     )}
                   </div>
 
-                  <div className="rounded-[24px] border border-zinc-300/10 bg-zinc-300/[0.04] p-5 backdrop-blur-sm sm:p-6">
+                  <div className="relative overflow-hidden rounded-[24px] border border-zinc-300/10 bg-zinc-300/[0.04] p-5 backdrop-blur-sm sm:p-6">
                     {children}
+                    {isLoading && (
+                      <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0a0f1c]/80 backdrop-blur-sm rounded-[24px]">
+                        <div className="-mt-8 scale-75 sm:scale-100">
+                          <MedicalLoader message={loadingMessage} />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

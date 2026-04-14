@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { QueuePatient } from "@/hooks/useQueue";
+import { QueuePatient } from "@/hooks/useQueue";
 import { Plus, Download, FileText, User, Stethoscope } from "lucide-react";
 
 interface Medicine {
@@ -121,8 +121,7 @@ export function PrescriptionGeneratorTab({
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 space-y-5">
-          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 backdrop-blur-md shadow-[0_16px_40px_rgba(0,0,0,0.2)] p-6">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="bg-card rounded-2xl border border-border shadow-card p-6">
             <h3 className="font-bold text-foreground text-sm mb-4 flex items-center gap-2">
               <User className="w-4 h-4 text-primary" /> Patient Details
             </h3>
@@ -454,11 +453,13 @@ export function PrescriptionGeneratorTab({
                 </div>
               </div>
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <div className="text-4xl mb-3">📋</div>
-                <div className="font-semibold text-sm">Prescription Preview</div>
-                <div className="text-xs mt-1">
-                  Fill in the form and click Generate to see a preview
+              <div className="text-center py-16 text-muted-foreground border-2 border-dashed border-white/5 rounded-2xl">
+                <div className="flex justify-center mb-4 text-muted-foreground/20">
+                  <FileText className="w-12 h-12" />
+                </div>
+                <div className="font-bold text-white/50 text-sm">Prescription Preview</div>
+                <div className="text-xs mt-2 px-10 text-white/40">
+                  Fill in the form and click Generate to see a professional preview
                 </div>
               </div>
             )}

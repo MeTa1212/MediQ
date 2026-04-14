@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export type UserRole = "doctor" | "patient";
+export type UserRole = "doctor" | "patient" | "admin";
 
 export interface SignUpData {
   email: string;
@@ -17,9 +17,11 @@ export const signUpUser = async (
 ) => {
   const { email, password, fullName, phone, age, specialty } = data;
 
-  console.log("Creating user with:", { email: email.trim().toLowerCase(), role });
+  console.log("Creating user with:", {
+    email: email.trim().toLowerCase(),
+    role,
+  });
 
-  // Create auth user
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: email.trim().toLowerCase(),
     password,
@@ -27,6 +29,9 @@ export const signUpUser = async (
       data: {
         full_name: fullName,
         role,
+        phone: phone || null,
+        age: age ?? null,
+        specialty: role === "doctor" ? specialty || null : null,
       },
     },
   });
@@ -37,33 +42,12 @@ export const signUpUser = async (
   }
 
   const user = authData.user;
-  if (!user) throw new Error("User signup failed - no user returned.");
-
-  console.log("Auth user created:", user.id);
-
-  // Wait a moment for auth to settle, then create profile
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  // Create profile
-  const { error: profileError } = await supabase.from("profiles").insert([
-    {
-      id: user.id,
-      full_name: fullName,
-      email: email.trim().toLowerCase(),
-      phone: phone || null,
-      role,
-      approved: role === "patient", // patients approved immediately
-      age: age ?? null,
-      specialty: role === "doctor" ? specialty || null : null,
-    },
-  ]);
-
-  if (profileError) {
-    console.error("Profile creation error:", profileError);
-    throw profileError;
+  if (!user) {
+    throw new Error("User signup failed - no user returned.");
   }
 
-  console.log("Profile created successfully");
+  console.log("Auth user created:", user.id);
+  return authData;
 };
 
 export const loginUser = async (email: string, password: string) => {
@@ -101,7 +85,7 @@ export const getUserProfile = async (userId: string) => {
     .eq("id", userId)
     .single();
 
-  if (error && error.code !== "PGRST116") { // PGRST116 = no rows
+  if (error && error.code !== "PGRST116") {
     throw error;
   }
 

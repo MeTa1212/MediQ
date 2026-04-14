@@ -5,6 +5,7 @@ import {
   useMemo,
   useState,
   ReactNode,
+  useCallback,
 } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -23,9 +24,12 @@ interface Profile {
   email: string;
   phone?: string | null;
   role: UserRole;
-  approved: boolean;
+  approved: boolean; // keep for backward compatibility
+  approval_status: "pending" | "approved" | "rejected";
   age?: number | null;
   specialty?: string | null;
+  clinic_name?: string | null;
+  registration_id?: string | null;
   created_at?: string;
 }
 
@@ -35,7 +39,9 @@ interface AuthContextType {
   profile: Profile | null;
   role: UserRole | null;
   loading: boolean;
+  isProfileLoading: boolean;
   approved: boolean;
+  approval_status: "pending" | "approved" | "rejected";
   signUp: (role: UserRole, data: SignUpData) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -49,45 +55,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initializing, setInitializing] = useState(true);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string) => {
     try {
       const profileData = await getUserProfile(userId);
+      console.log("Fetched profile:", profileData);
       setProfile(profileData);
+      return profileData;
     } catch (error) {
       console.error("Error fetching profile:", error);
       setProfile(null);
+      return null;
     }
-  };
+  }, []);
 
-  const refreshProfile = async () => {
-    if (!user) return;
-    await fetchProfile(user.id);
-  };
+  const refreshProfile = useCallback(async () => {
+    if (!user?.id) return;
+
+    setLoading(true);
+    setIsProfileLoading(true);
+    try {
+      await fetchProfile(user.id);
+    } finally {
+      setLoading(false);
+      setIsProfileLoading(false);
+    }
+  }, [user, fetchProfile]);
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      setInitializing(true);
+    let mounted = true;
 
+    const initializeAuth = async () => {
+      setLoading(true);
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
 
+        if (!mounted) return;
+
         setSession(session);
         setUser(session?.user ?? null);
-
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-        }
       } catch (error) {
         console.error("Auth initialization error:", error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        }
       } finally {
-        setInitializing(false);
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
@@ -95,38 +113,91 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event);
+
+      if (!mounted) return;
 
       setSession(session);
       setUser(session?.user ?? null);
 
-      if (session?.user) {
-        // Delay profile fetch to avoid race conditions
-        setTimeout(() => {
-          fetchProfile(session.user.id).catch(console.error);
-        }, 100);
-      } else {
+      if (!session?.user) {
         setProfile(null);
+        setLoading(false);
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadProfile = async () => {
+      if (!user?.id) {
+        setProfile(null);
+        setLoading(false);
+        setIsProfileLoading(false);
+        return;
+      }
+      
+      // Prevent fetching if we just fetched it during login
+      if (profile?.id === user.id) {
+        return; 
+      }
+
+      setLoading(true);
+      setIsProfileLoading(true);
+      try {
+        const profileData = await fetchProfile(user.id);
+        if (!active) return;
+        setProfile(profileData);
+      } finally {
+        if (active) {
+          setLoading(false);
+          setIsProfileLoading(false);
+        }
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id, fetchProfile, profile?.id]);
 
   const signUp = async (role: UserRole, data: SignUpData) => {
     await signUpUser(role, data);
   };
 
   const login = async (email: string, password: string) => {
-    await loginUser(email.trim().toLowerCase(), password);
+    setLoading(true);
+    setIsProfileLoading(true);
+    try {
+      const authData = await loginUser(email.trim().toLowerCase(), password);
+      // Immediately fetch profile so we can guarantee route stability
+      const profileData = await fetchProfile(authData.user.id);
+      return profileData;
+    } finally {
+      // The useEffect will also sync, but we clear loading safely
+      setLoading(false);
+      setIsProfileLoading(false);
+    }
   };
 
   const logout = async () => {
-    await logoutUser();
-    setProfile(null);
+    setLoading(true);
+    try {
+      await logoutUser();
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = useMemo(
@@ -136,13 +207,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       profile,
       role: profile?.role ?? null,
       approved: profile?.approved ?? false,
-      loading: initializing || loading,
+      approval_status: profile ? profile.approval_status : (user ? "pending" : "pending"),
+      loading,
+      isProfileLoading,
       signUp,
       login,
       logout,
       refreshProfile,
     }),
-    [user, session, profile, initializing, loading]
+    [user, session, profile, loading, isProfileLoading, refreshProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

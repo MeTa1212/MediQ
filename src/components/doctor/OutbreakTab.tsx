@@ -1,78 +1,97 @@
-import { OUTBREAK_DATA } from "@/data/mockData";
+import { useEffect, useState } from "react";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { BadgeChip } from "@/components/BadgeChip";
+import { AlertTriangle, AlertCircle } from "lucide-react";
 
 export function OutbreakTab() {
-  const maxOB = Math.max(...OUTBREAK_DATA.map(d => d.fever));
+  const { fetchOutbreakStatistics, loading } = useAnalytics();
+  const [stats, setStats] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchOutbreakStatistics().then(setStats);
+  }, []);
+
+  const getSymptomCount = (label: string) => 
+    stats.filter(s => s.symptom_tags?.includes(label)).length;
+
+  const totalFever = getSymptomCount("Fever");
+  const totalCough = getSymptomCount("Cough");
+  const totalCold = getSymptomCount("Cold");
+  const totalVomiting = getSymptomCount("Vomiting");
+
+  const total = stats.length || 1;
+
+  if (loading && stats.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-up space-y-5">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="font-bold text-foreground text-lg">Outbreak Monitor</h2>
-          <p className="text-muted-foreground text-xs mt-0.5">Anonymous community symptom tracking</p>
+          <h2 className="font-bold text-white text-lg">Local Outbreak Monitor</h2>
+          <p className="text-white/60 text-xs mt-0.5">Anonymous symptom tracking across all clinic patients</p>
         </div>
-        <BadgeChip className="bg-destructive/10 text-destructive border border-destructive/20 text-xs">⚠ Fever +42%</BadgeChip>
+        {totalFever > 5 && (
+            <BadgeChip className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold uppercase tracking-wider animate-pulse flex items-center gap-1.5">
+              <AlertTriangle className="w-3 h-3" /> High Fever Trend
+            </BadgeChip>
+        )}
       </div>
 
-      {/* Alert */}
-      <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-4 flex gap-3">
-        <span className="text-xl shrink-0">🚨</span>
-        <div>
-          <div className="font-bold text-destructive text-sm">Possible Viral Outbreak Detected</div>
-          <div className="text-destructive/70 text-xs mt-1 leading-relaxed">Fever cases rose 42% this week. Cough cases also trending up. Consider alerting local health authorities.</div>
-        </div>
-      </div>
-
-      {/* Stacked Bar Chart */}
-      <div className="bg-card rounded-2xl border border-border shadow-card p-5">
-        <div className="font-semibold text-foreground/80 text-sm mb-4">Symptom Trend — Last 7 Days</div>
-        <div className="flex items-end gap-2 h-40">
-          {OUTBREAK_DATA.map(d => (
-            <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-              <div className="w-full flex flex-col justify-end gap-px" style={{ height: "120px" }}>
-                <div className="w-full bg-destructive/70 rounded-sm transition-all duration-600" style={{ height: `${(d.fever / maxOB) * 90}px` }} />
-                <div className="w-full bg-warning/70 transition-all duration-600" style={{ height: `${(d.cough / maxOB) * 90}px` }} />
-                <div className="w-full bg-success/70 rounded-sm transition-all duration-600" style={{ height: `${(d.other / maxOB) * 90}px` }} />
-              </div>
-              <span className="text-xs text-muted-foreground">{d.day}</span>
+      {totalFever > 3 && (
+        <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-5 flex gap-4 backdrop-blur-md">
+          <div className="w-12 h-12 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400 border border-rose-500/30 shrink-0">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="font-bold text-rose-400 text-sm">Potential Spike Detected</div>
+            <div className="text-rose-400/70 text-xs mt-1 leading-relaxed">
+              Fever and Respiratory symptoms have increased in the last 24 hours. (Detected {totalFever} cases).
             </div>
-          ))}
+          </div>
         </div>
-        <div className="flex gap-4 mt-3">
+      )}
+
+      {/* Symptom Distribution */}
+      <div className="bg-white/5 rounded-3xl border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.2)] p-6 backdrop-blur-md">
+        <div className="font-bold text-white/90 mb-6 text-sm">Symptom Distribution (Last 100 Patients)</div>
+        <div className="space-y-6">
           {[
-            ["bg-destructive/70", "Fever"],
-            ["bg-warning/70", "Cough"],
-            ["bg-success/70", "Other"],
-          ].map(([bg, lb]) => (
-            <div key={lb} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className={`w-2.5 h-2.5 rounded-sm ${bg}`} />{lb}
+            { label: "Fever", count: totalFever, color: "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.4)]" },
+            { label: "Cough", count: totalCough, color: "bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]" },
+            { label: "Cold/Flu", count: totalCold, color: "bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]" },
+            { label: "Vomiting", count: totalVomiting, color: "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]" },
+          ].map(s => (
+            <div key={s.label}>
+               <div className="flex justify-between text-xs font-bold mb-2 uppercase tracking-wider text-white/40">
+                 <span>{s.label}</span>
+                 <span className="text-white/80">{s.count} Cases</span>
+               </div>
+               <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                 <div 
+                   className={`${s.color} h-full rounded-full transition-all duration-1000`} 
+                   style={{ width: `${(s.count / total) * 100}%` }}
+                 />
+               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Symptom Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {[
-          { sym: "Fever", count: 14, chg: "+42%", variant: "destructive" as const },
-          { sym: "Cough", count: 8, chg: "+28%", variant: "warning" as const },
-          { sym: "Vomiting", count: 4, chg: "+10%", variant: "success" as const },
-          { sym: "Rash", count: 2, chg: "–5%", variant: "muted" as const },
-        ].map(s => {
-          const classes = {
-            destructive: "bg-destructive/5 border-destructive/20 text-destructive",
-            warning: "bg-warning/5 border-warning/20 text-warning",
-            success: "bg-success/5 border-success/20 text-success",
-            muted: "bg-secondary border-border text-muted-foreground",
-          };
-          return (
-            <div key={s.sym} className={`rounded-2xl border p-4 ${classes[s.variant]}`}>
-              <div className="text-foreground/60 text-xs font-medium mb-1">{s.sym}</div>
-              <div className="font-extrabold text-2xl">{s.count}</div>
-              <div className="text-xs font-semibold mt-0.5">{s.chg} this week</div>
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-2 gap-4">
+         <div className="bg-white/5 rounded-2xl p-5 border border-white/10 text-center">
+            <div className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">Total Monitored</div>
+            <div className="text-2xl font-black text-white">{stats.length}</div>
+         </div>
+         <div className="bg-white/5 rounded-2xl p-5 border border-white/10 text-center">
+            <div className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">Clinic Area</div>
+            <div className="text-2xl font-black text-white">Local</div>
+         </div>
       </div>
     </div>
   );
