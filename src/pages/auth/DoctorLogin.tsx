@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,10 @@ export default function DoctorLogin() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const { login, logout } = useAuth();
+  const isAdminLogin =
+    location.pathname === "/admin/login" || location.pathname === "/login/admin";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -34,11 +37,29 @@ export default function DoctorLogin() {
 
     try {
       const profile = await login(formData.email, formData.password);
-      
+
+      if (isAdminLogin) {
+        if (!profile) {
+          setError(
+            "Login succeeded, but your profile could not be loaded. Please run fix_rls_policies.sql and verify your profiles row exists."
+          );
+          return;
+        }
+
+        if (profile?.role !== "admin") {
+          await logout();
+          setError("This portal is for admin accounts only.");
+          return;
+        }
+
+        navigate("/admin", { replace: true });
+        return;
+      }
+
       if (profile?.role === "admin") {
-         navigate("/admin", { replace: true });
+        navigate("/admin", { replace: true });
       } else {
-         navigate("/doctor", { replace: true });
+        navigate("/doctor", { replace: true });
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -53,16 +74,18 @@ export default function DoctorLogin() {
 
   return (
     <AuthLayout 
-      theme="doctor"
+      theme={isAdminLogin ? "admin" : "doctor"}
       isLoading={isSubmitting}
-      loadingMessage="Verifying credentials..."
+      loadingMessage={isAdminLogin ? "Verifying admin credentials..." : "Verifying credentials..."}
     >
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-          Welcome back
+          {isAdminLogin ? "Admin access" : "Welcome back"}
         </h1>
         <p className="mt-2 text-sm leading-6 text-white/60 sm:text-base">
-          Sign in to access your dashboard and manage your workflow.
+          {isAdminLogin
+            ? "Sign in with an admin account to manage approvals and access control."
+            : "Sign in to access your dashboard and manage your workflow."}
         </p>
       </div>
 
@@ -77,7 +100,7 @@ export default function DoctorLogin() {
             required
             value={formData.email}
             onChange={handleChange}
-            placeholder="doctor@example.com"
+            placeholder={isAdminLogin ? "admin@mediq.com" : "doctor@example.com"}
             className="h-14 rounded-2xl border border-zinc-300/10 bg-transparent text-white placeholder:text-white/25 transition-all duration-300 focus:border-blue-400/40 focus:bg-white/[0.02] focus:ring-0"
           />
         </div>
@@ -133,15 +156,21 @@ export default function DoctorLogin() {
         </Button>
       </form>
 
-      <p className="mt-8 text-center text-sm text-white/55">
-        Don&apos;t have an account?{" "}
-        <Link
-          to="/signup/doctor"
-          className="font-semibold text-blue-300 transition hover:text-blue-200 hover:underline"
-        >
-          Sign up
-        </Link>
-      </p>
+      {isAdminLogin ? (
+        <p className="mt-8 text-center text-sm text-white/55">
+          Admin accounts are provisioned by the platform owner.
+        </p>
+      ) : (
+        <p className="mt-8 text-center text-sm text-white/55">
+          Don&apos;t have an account?{" "}
+          <Link
+            to="/signup/doctor"
+            className="font-semibold text-blue-300 transition hover:text-blue-200 hover:underline"
+          >
+            Sign up
+          </Link>
+        </p>
+      )}
     </AuthLayout>
   );
 }

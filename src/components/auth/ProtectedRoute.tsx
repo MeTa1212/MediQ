@@ -14,7 +14,7 @@ const ProtectedRoute = ({
   children,
   allowedRole,
 }: ProtectedRouteProps) => {
-  const { user, role, loading, isProfileLoading, approval_status, logout } = useAuth();
+  const { user, role, loading, isProfileLoading, approval_status, logout, refreshProfile } = useAuth();
 
   // Still loading auth or profile — show branded loader
   if (loading || isProfileLoading) {
@@ -27,8 +27,48 @@ const ProtectedRoute = ({
 
   // Not logged in — redirect to appropriate login
   if (!user) {
-    const loginPath = allowedRole === "doctor" ? "/login/doctor" : allowedRole === "admin" ? "/login/doctor" : "/login/patient";
+    const loginPath =
+      allowedRole === "doctor"
+        ? "/login/doctor"
+        : allowedRole === "admin"
+          ? "/admin/login"
+          : "/login/patient";
     return <Navigate to={loginPath} replace />;
+  }
+
+  // Session exists but profile role is temporarily unavailable.
+  // Avoid bouncing users out on refresh; allow a safe retry.
+  if (!role) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-[#0a0f1c] text-white">
+        <div className="max-w-md w-full text-center space-y-6 p-8 rounded-[28px] border border-white/10 bg-white/5 backdrop-blur-2xl shadow-[0_16px_40px_rgba(0,0,0,0.16)] relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none" />
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center relative">
+            <RefreshCw className="h-8 w-8 text-blue-400" />
+          </div>
+          <div className="space-y-2 relative">
+            <h1 className="text-2xl font-bold tracking-tight">Syncing account</h1>
+            <p className="text-white/60 text-sm leading-relaxed">
+              You are signed in, but your profile is still syncing. Retry profile sync.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 relative">
+            <button
+              onClick={() => void refreshProfile()}
+              className="w-full py-3.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors font-semibold text-sm flex items-center justify-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" /> Retry Sync
+            </button>
+            <button
+              onClick={() => logout()}
+              className="w-full py-3.5 rounded-xl bg-transparent border border-white/10 text-white/70 hover:bg-white/5 hover:text-white transition-colors font-semibold text-sm flex items-center justify-center gap-2"
+            >
+              <LogOut className="w-4 h-4" /> Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Logged in but wrong role

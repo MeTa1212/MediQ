@@ -5,7 +5,7 @@ import { MedicalLoader } from "@/components/MedicalLoader";
 
 interface AuthLayoutProps {
   children: ReactNode;
-  theme?: "doctor" | "patient";
+  theme?: "doctor" | "patient" | "admin";
   title?: string;
   subtitle?: string;
   isLoading?: boolean;
@@ -35,7 +35,33 @@ export default function AuthLayout({
   loadingMessage = "Authenticating...",
 }: AuthLayoutProps) {
   const isDoctor = theme === "doctor";
+  const isAdmin = theme === "admin";
+  const isClinicalTheme = isDoctor || isAdmin;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const portalName = isAdmin
+    ? "Admin Portal"
+    : isDoctor
+      ? "Doctor Portal"
+      : "Patient Portal";
+
+  const heroHeadline = isAdmin
+    ? "Oversee approvals and keep your clinic access secure."
+    : isDoctor
+      ? "A cleaner, faster way to manage your clinic workflow."
+      : "Healthcare access that feels simple, calm, and personal.";
+
+  const heroCopy = isAdmin
+    ? "Sign in to review doctor applications, manage account access, and keep your operations controlled from one secure workspace."
+    : isDoctor
+      ? "Sign in to manage appointments, patient flow, prescriptions, and clinic insights in one polished workspace."
+      : "Book smarter, track your queue, receive prescriptions, and stay updated with one smooth experience.";
+
+  const accessChipLabel = isAdmin
+    ? "Admin access"
+    : isDoctor
+      ? "Doctor access"
+      : "Patient access";
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -59,7 +85,7 @@ export default function AuthLayout({
 
     let orbs: Orb[] = [];
 
-    const palette = isDoctor
+    const palette = isClinicalTheme
       ? ["#38bdf8", "#22d3ee", "#f472b6", "#a78bfa", "#60a5fa"]
       : ["#2dd4bf", "#34d399", "#f472b6", "#22c55e", "#67e8f9"];
 
@@ -207,7 +233,7 @@ export default function AuthLayout({
       window.removeEventListener("touchend", onLeave);
       window.removeEventListener("resize", onResize);
     };
-  }, [isDoctor]);
+  }, [isClinicalTheme]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#0a0f1c] px-4 py-8 text-white sm:px-6 lg:px-8">
@@ -297,6 +323,8 @@ export default function AuthLayout({
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-300/[0.10] ring-1 ring-zinc-200/10 backdrop-blur-sm">
                   {isDoctor ? (
                     <Stethoscope className="h-7 w-7" />
+                  ) : isAdmin ? (
+                    <ShieldCheck className="h-7 w-7" />
                   ) : (
                     <HeartPulse className="h-7 w-7" />
                   )}
@@ -305,27 +333,23 @@ export default function AuthLayout({
                 <div>
                   <p
                     className={`text-xs font-semibold uppercase tracking-[0.22em] ${
-                      isDoctor ? "text-blue-200/90" : "text-emerald-200/90"
+                      isClinicalTheme ? "text-blue-200/90" : "text-emerald-200/90"
                     }`}
                   >
                     MediQ
                   </p>
                   <h2 className="text-2xl font-semibold tracking-tight">
-                    {isDoctor ? "Doctor Portal" : "Patient Portal"}
+                    {portalName}
                   </h2>
                 </div>
               </div>
 
               <div className="mt-12 max-w-md">
                 <h1 className="text-4xl font-bold leading-tight xl:text-5xl">
-                  {isDoctor
-                    ? "A cleaner, faster way to manage your clinic workflow."
-                    : "Healthcare access that feels simple, calm, and personal."}
+                  {heroHeadline}
                 </h1>
                 <p className="mt-5 text-base leading-7 text-white/75">
-                  {isDoctor
-                    ? "Sign in to manage appointments, patient flow, prescriptions, and clinic insights in one polished workspace."
-                    : "Book smarter, track your queue, receive prescriptions, and stay updated with one smooth experience."}
+                  {heroCopy}
                 </p>
               </div>
             </div>
@@ -334,7 +358,7 @@ export default function AuthLayout({
               <div className="rounded-2xl border border-zinc-300/10 bg-zinc-300/[0.07] p-5 backdrop-blur-sm">
                 <p
                   className={`text-sm font-semibold ${
-                    isDoctor ? "text-sky-200" : "text-emerald-200"
+                    isClinicalTheme ? "text-sky-200" : "text-emerald-200"
                   }`}
                 >
                   Secure experience
@@ -348,12 +372,12 @@ export default function AuthLayout({
                 <div className="flex items-center gap-2">
                   <ShieldCheck
                     className={`h-4 w-4 ${
-                      isDoctor ? "text-blue-200" : "text-teal-200"
+                      isClinicalTheme ? "text-blue-200" : "text-teal-200"
                     }`}
                   />
                   <p
                     className={`text-sm font-semibold ${
-                      isDoctor ? "text-blue-200" : "text-teal-200"
+                      isClinicalTheme ? "text-blue-200" : "text-teal-200"
                     }`}
                   >
                     Trusted workflow
@@ -383,12 +407,14 @@ export default function AuthLayout({
                   <div className="mb-8">
                     <div
                       className={`mb-4 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] backdrop-blur-sm shadow-sm ${
-                        isDoctor
+                        isAdmin
+                          ? "border border-violet-400/25 bg-violet-500/18 text-violet-50"
+                          : isDoctor
                           ? "border border-blue-400/25 bg-blue-500/18 text-blue-50"
                           : "border border-emerald-400/25 bg-emerald-500/18 text-emerald-50"
                       }`}
                     >
-                      {isDoctor ? "Doctor access" : "Patient access"}
+                      {accessChipLabel}
                     </div>
 
                     {title && (

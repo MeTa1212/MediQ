@@ -61,11 +61,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const profileData = await getUserProfile(userId);
       console.log("Fetched profile:", profileData);
-      setProfile(profileData);
       return profileData;
     } catch (error) {
       console.error("Error fetching profile:", error);
-      setProfile(null);
       return null;
     }
   }, []);
@@ -76,7 +74,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     setIsProfileLoading(true);
     try {
-      await fetchProfile(user.id);
+      const profileData = await fetchProfile(user.id);
+      if (profileData) {
+        setProfile(profileData);
+      }
     } finally {
       setLoading(false);
       setIsProfileLoading(false);
@@ -123,7 +124,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!session?.user) {
         setProfile(null);
-        setLoading(false);
+        setIsProfileLoading(false);
+
+        // Avoid dropping loading state on transient INITIAL_SESSION null events,
+        // which can happen before getSession() finishes during page refresh.
+        if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+          setLoading(false);
+        }
       }
     });
 
@@ -138,14 +145,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const loadProfile = async () => {
       if (!user?.id) {
         setProfile(null);
-        setLoading(false);
         setIsProfileLoading(false);
         return;
-      }
-      
-      // Prevent fetching if we just fetched it during login
-      if (profile?.id === user.id) {
-        return; 
       }
 
       setLoading(true);
@@ -153,7 +154,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const profileData = await fetchProfile(user.id);
         if (!active) return;
-        setProfile(profileData);
+        if (profileData) {
+          setProfile(profileData);
+        }
       } finally {
         if (active) {
           setLoading(false);
@@ -167,13 +170,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       active = false;
     };
-  }, [user?.id, fetchProfile, profile?.id]);
+  }, [user?.id, fetchProfile]);
 
-  const signUp = async (role: UserRole, data: SignUpData) => {
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`profile-sync-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${user.id}`,
+        },
+        () => {
+          void (async () => {
+            const profileData = await fetchProfile(user.id);
+            if (profileData) {
+              setProfile(profileData);
+            }
+          })();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id, fetchProfile]);
+
+  const signUp = useCallback(async (role: UserRole, data: SignUpData) => {
     await signUpUser(role, data);
-  };
+  }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     setIsProfileLoading(true);
     try {
@@ -186,9 +218,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
       setIsProfileLoading(false);
     }
-  };
+  }, [fetchProfile]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setLoading(true);
     try {
       await logoutUser();
@@ -198,7 +230,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -207,7 +239,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       profile,
       role: profile?.role ?? null,
       approved: profile?.approved ?? false,
-      approval_status: profile ? profile.approval_status : (user ? "pending" : "pending"),
+      approval_status: profile?.approval_status ?? "pending",
       loading,
       isProfileLoading,
       signUp,
@@ -215,7 +247,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logout,
       refreshProfile,
     }),
-    [user, session, profile, loading, isProfileLoading, refreshProfile]
+    [
+      user,
+      session,
+      profile,
+      loading,
+      isProfileLoading,
+      signUp,
+      login,
+      logout,
+      refreshProfile,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

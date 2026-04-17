@@ -11,6 +11,65 @@ export interface SignUpData {
   specialty?: string;
 }
 
+const ensureProfileRows = async (
+  userId: string,
+  role: UserRole,
+  data: SignUpData
+) => {
+  const isDoctor = role === "doctor";
+
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .upsert(
+      {
+        id: userId,
+        full_name: data.fullName,
+        email: data.email.trim().toLowerCase(),
+        phone: data.phone || null,
+        role,
+        approved: !isDoctor,
+        approval_status: isDoctor ? "pending" : "approved",
+      },
+      { onConflict: "id", ignoreDuplicates: true }
+    );
+
+  if (profileError) {
+    console.warn("Profile upsert skipped:", profileError);
+    return;
+  }
+
+  if (isDoctor) {
+    const { error: doctorProfileError } = await supabase
+      .from("doctor_profiles")
+      .upsert(
+        {
+          id: userId,
+          specialty: data.specialty || null,
+        },
+        { onConflict: "id", ignoreDuplicates: true }
+      );
+
+    if (doctorProfileError) {
+      console.warn("Doctor profile upsert skipped:", doctorProfileError);
+    }
+    return;
+  }
+
+  const { error: patientProfileError } = await supabase
+    .from("patient_profiles")
+    .upsert(
+      {
+        id: userId,
+        age: data.age ?? null,
+      },
+      { onConflict: "id", ignoreDuplicates: true }
+    );
+
+  if (patientProfileError) {
+    console.warn("Patient profile upsert skipped:", patientProfileError);
+  }
+};
+
 export const signUpUser = async (
   role: UserRole,
   data: SignUpData
@@ -47,6 +106,9 @@ export const signUpUser = async (
   }
 
   console.log("Auth user created:", user.id);
+
+  await ensureProfileRows(user.id, role, data);
+
   return authData;
 };
 

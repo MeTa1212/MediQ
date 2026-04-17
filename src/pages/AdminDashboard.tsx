@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +7,7 @@ import {
   Mail, Phone, Stethoscope, Clock, Users, FileText, LogOut, RefreshCw, X,
 } from "lucide-react";
 import { MedicalLoader } from "@/components/MedicalLoader";
+import { toast } from "@/hooks/use-toast";
 
 interface DoctorProfile {
   id: string;
@@ -44,20 +45,66 @@ export default function AdminDashboard() {
     },
   });
 
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-doctor-requests-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        () => {
+          void refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [refetch]);
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "approved" | "rejected" }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .update({ 
           approval_status: status,
           approved: status === "approved"
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("role", "doctor")
+        .select("id")
+        .maybeSingle();
+
       if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "Approval update was blocked. Run fix_rls_policies.sql in Supabase to allow admin updates."
+        );
+      }
+
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "doctors"] });
       setSelectedDoctor(null);
+
+      toast({
+        title: "Status updated",
+        description: `Doctor application marked as ${variables.status}.`,
+      });
+    },
+    onError: (error: unknown) => {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to update doctor approval status.";
+
+      toast({
+        title: "Approval update failed",
+        description: message,
+        variant: "destructive",
+      });
     },
   });
 

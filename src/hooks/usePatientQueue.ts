@@ -73,6 +73,8 @@ interface DoctorProfileRow {
 interface DoctorListRow {
   id: string;
   full_name: string | null;
+  approved?: boolean | null;
+  approval_status?: "pending" | "approved" | "rejected" | null;
   doctor_profiles?: DoctorProfileRow | DoctorProfileRow[] | null;
 }
 
@@ -152,13 +154,14 @@ export function usePatientQueue() {
       .select(`
         id,
         full_name,
+        approved,
+        approval_status,
         doctor_profiles (
           specialty,
           clinic_name
         )
       `)
-      .eq("role", "doctor")
-      .eq("approved", true);
+      .eq("role", "doctor");
 
     if (error) {
       console.error("Error loading doctors:", error);
@@ -167,7 +170,11 @@ export function usePatientQueue() {
 
     console.log("Doctors loaded from Supabase:", data);
 
-    const mapped: AvailableDoctor[] = ((data ?? []) as unknown as DoctorListRow[]).map((d) => {
+    const approvedDoctors = ((data ?? []) as unknown as DoctorListRow[]).filter(
+      (d) => d.approval_status === "approved" || d.approved === true
+    );
+
+    const mapped: AvailableDoctor[] = approvedDoctors.map((d) => {
       const doctorProfile = firstItem(d.doctor_profiles);
 
       return {
@@ -332,13 +339,39 @@ export function usePatientQueue() {
 
       if (fnError) throw fnError;
 
+      const resolvedTokenNumber = (() => {
+        if (typeof tokenNum === "string") return tokenNum;
+
+        if (Array.isArray(tokenNum) && tokenNum.length > 0) {
+          const first = tokenNum[0] as Record<string, unknown>;
+          const tokenFromArray =
+            first.generate_token_number ?? first.token_number;
+          return typeof tokenFromArray === "string" ? tokenFromArray : null;
+        }
+
+        if (tokenNum && typeof tokenNum === "object") {
+          const tokenObj = tokenNum as Record<string, unknown>;
+          const tokenFromObject =
+            tokenObj.generate_token_number ?? tokenObj.token_number;
+          return typeof tokenFromObject === "string" ? tokenFromObject : null;
+        }
+
+        return null;
+      })();
+
+      if (!resolvedTokenNumber || !resolvedTokenNumber.trim()) {
+        throw new Error(
+          "Token generator returned an empty token number. Please fix the generate_token_number function in Supabase."
+        );
+      }
+
       const emergencyTags = ["Emergency", "Injury / Wound", "Chest Pain"];
       const isEmergency = selectedTags.some((tag) => emergencyTags.includes(tag));
 
       const { data, error } = await supabase
         .from("tokens")
         .insert({
-          token_number: tokenNum,
+          token_number: resolvedTokenNumber,
           patient_id: profile.id,
           doctor_id: doctorId,
           clinic_date: today,
@@ -374,6 +407,30 @@ export function usePatientQueue() {
 
   useEffect(() => {
     void loadDoctors();
+  }, [loadDoctors]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("patient-doctor-list-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        () => {
+          void loadDoctors();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "doctor_profiles" },
+        () => {
+          void loadDoctors();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [loadDoctors]);
 
   useEffect(() => {
