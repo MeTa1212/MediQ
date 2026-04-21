@@ -131,36 +131,46 @@ const Landing = () => {
           font-weight: 600;
           font-size: 0.875rem;
           border-radius: 0.875rem;
-          padding: 0.875rem 2rem;
+          padding: 0.875rem 2.25rem;
           min-width: 200px;
-          border: 1px solid rgba(255,255,255,0.12);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          transition: all 0.2s ease;
+          border: 1px solid rgba(255,255,255,0.08);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
           color: white;
+        }
+        .cta-btn::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+          transform: translateX(-100%);
+        }
+        .cta-btn:hover::after {
+          animation: sweepLight 1.5s infinite;
         }
         .cta-btn:hover {
           transform: translateY(-2px);
-          border-color: rgba(255,255,255,0.18);
+          border-color: rgba(255,255,255,0.2);
         }
         .cta-btn:active {
-          transform: translateY(0);
+          transform: translateY(1px) scale(0.98);
         }
         .cta-btn-blue {
-          background: rgba(59,130,246,0.22);
-          box-shadow: 0 4px 20px rgba(59,130,246,0.18), inset 0 1px 0 rgba(255,255,255,0.10);
+          background: rgba(59,130,246,0.12);
+          box-shadow: 0 8px 32px rgba(59,130,246,0.18), inset 0 1px 0 rgba(255,255,255,0.12);
         }
         .cta-btn-blue:hover {
-          background: rgba(59,130,246,0.30);
-          box-shadow: 0 8px 28px rgba(59,130,246,0.28), inset 0 1px 0 rgba(255,255,255,0.14);
+          background: rgba(59,130,246,0.18);
+          box-shadow: 0 12px 48px rgba(59,130,246,0.28), inset 0 1px 0 rgba(255,255,255,0.2);
         }
         .cta-btn-green {
-          background: rgba(34,197,94,0.16);
-          box-shadow: 0 4px 20px rgba(34,197,94,0.14), inset 0 1px 0 rgba(255,255,255,0.10);
+          background: rgba(34,197,94,0.12);
+          box-shadow: 0 8px 32px rgba(34,197,94,0.15), inset 0 1px 0 rgba(255,255,255,0.12);
         }
         .cta-btn-green:hover {
-          background: rgba(34,197,94,0.24);
-          box-shadow: 0 8px 28px rgba(34,197,94,0.22), inset 0 1px 0 rgba(255,255,255,0.14);
+          background: rgba(34,197,94,0.18);
+          box-shadow: 0 12px 48px rgba(34,197,94,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
         }
 
         /* ── Feature cards ───────────────────────── */

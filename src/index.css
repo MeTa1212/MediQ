@@ -118,6 +118,98 @@
     background: rgba(255,255,255,0.10);
     border-radius: 99px;
   }
+
+  /* ── Premium Button Design System ─────────────────────── */
+  
+  /* Primary Button: Minimal & Expensive (Soft Black / Deep Indigo gradient with inner glow) */
+  .btn-premium-primary {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 100%), hsl(225, 30%, 12%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #fff;
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .btn-premium-primary:hover {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%), hsl(225, 30%, 16%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .btn-premium-primary:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    background: hsl(225, 30%, 10%);
+  }
+
+  /* Secondary Button: Subtle Neumorphism */
+  .btn-premium-secondary {
+    background: #0f1520;
+    box-shadow: -1px -1px 3px rgba(255, 255, 255, 0.02), 2px 2px 6px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.85);
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .btn-premium-secondary:hover {
+    box-shadow: -2px -2px 6px rgba(255, 255, 255, 0.04), 4px 4px 10px rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.06);
+    transform: translateY(-1px);
+  }
+  .btn-premium-secondary:active {
+    box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.4), inset -1px -1px 3px rgba(255, 255, 255, 0.01);
+    transform: translateY(1px) scale(0.98);
+  }
+
+  /* Destructive Button: Refined Red */
+  .btn-premium-destructive {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%), hsl(347, 65%, 45%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(244, 63, 94, 0.4);
+    color: #fff;
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .btn-premium-destructive:hover {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%), hsl(347, 65%, 50%);
+    box-shadow: 0 4px 16px rgba(244, 63, 94, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+  }
+  .btn-premium-destructive:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Ghost Button: Minimal hover */
+  .btn-premium-ghost {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.2s ease;
+  }
+  .btn-premium-ghost:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+  .btn-premium-ghost:active {
+    transform: scale(0.98);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  /* Outline Button: Clean and crisp */
+  .btn-premium-outline {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.25s ease;
+  }
+  .btn-premium-outline:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+  .btn-premium-outline:active {
+    transform: translateY(1px) scale(0.98);
+    background: rgba(255, 255, 255, 0.02);
+  }
 }
 
 /* ── Keyframes ──────────────────────────────────────── */
@@ -149,6 +241,10 @@
 @keyframes floatDrift {
   0%, 100% { transform: translateY(0px);    }
   50%       { transform: translateY(-8px);  }
+}
+@keyframes sweepLight {
+  0% { transform: translateX(-100%); }
+  50%, 100% { transform: translateX(100%); }
 }
 
 /* ── Scrollbar ──────────────────────────────────────── */
