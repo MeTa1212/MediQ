@@ -21,12 +21,14 @@ import {
 } from "lucide-react";
 import { usePatientQueue } from "@/hooks/usePatientQueue";
 import { useAuth } from "@/hooks/useAuth";
+
 const STATUS_META: Record<string, { badgeClass: string; label?: string }> = {
-  waiting: { badgeClass: "bg-warning/10 text-warning border-warning/20" },
-  serving: { badgeClass: "bg-primary/10 text-primary border-primary/20" },
-  completed: { badgeClass: "bg-success/10 text-success border-success/20" },
-  skipped: { badgeClass: "bg-destructive/10 text-destructive border-destructive/20" },
+  waiting:   { badgeClass: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  serving:   { badgeClass: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  completed: { badgeClass: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  skipped:   { badgeClass: "bg-rose-500/10 text-rose-400 border-rose-500/20" },
 };
+
 import { ToastNotification } from "@/components/ToastNotification";
 import { BadgeChip } from "@/components/BadgeChip";
 
@@ -65,15 +67,11 @@ const PatientApp = () => {
   };
 
   const handleBookToken = async () => {
-    if (!selectedDoctor) {
-      notify("Please select a doctor", "err");
-      return;
-    }
+    if (!selectedDoctor) { notify("Please select a doctor", "err"); return; }
     if (selectedTags.length === 0 && !customSymptoms.trim()) {
       notify("Please select at least one symptom or describe it", "err");
       return;
     }
-
     try {
       const token = await bookToken(selectedDoctor, selectedTags, customSymptoms);
       setIssuedToken(token);
@@ -86,7 +84,6 @@ const PatientApp = () => {
   const searchPatient = () => {
     const q = searchQ.trim().toLowerCase();
     if (!q) return;
-
     const p = myTokens.find(
       (x) => x.token_number.toLowerCase() === q || x.id === q
     );
@@ -99,126 +96,126 @@ const PatientApp = () => {
     navigate("/");
   };
 
-  // Find currently serving token for the selected doctor (or first token's doctor)
-  const currentServingToken = issuedToken 
-    ? myTokens.find(t => t.doctor_id === issuedToken.doctor_id && t.status === "serving")
-    : myTokens.find(t => t.status === "serving");
+  const currentServingToken = issuedToken
+    ? myTokens.find((t) => t.doctor_id === issuedToken.doctor_id && t.status === "serving")
+    : myTokens.find((t) => t.status === "serving");
 
   const bottomNav: { id: Tab; label: string; icon: typeof Home }[] = [
-    { id: "home", label: "Home", icon: Home },
-    { id: "book", label: "Book", icon: CalendarPlus },
-    { id: "status", label: "Queue", icon: ListOrdered },
-    { id: "prescriptions", label: "Rx", icon: FileText },
-    { id: "profile", label: "Profile", icon: User },
+    { id: "home",          label: "Home",    icon: Home },
+    { id: "book",          label: "Book",    icon: CalendarPlus },
+    { id: "status",        label: "Queue",   icon: ListOrdered },
+    { id: "prescriptions", label: "Rx",      icon: FileText },
+    { id: "profile",       label: "Profile", icon: User },
   ];
 
   return (
-    <div className="min-h-screen bg-[#08111f] text-white">
+    <div className="min-h-screen bg-[#080e1a] text-white">
       <ToastNotification toast={toast} />
 
       <div className="mx-auto flex min-h-screen max-w-md flex-col pb-20">
-        {/* Header */}
-        <div className="gradient-primary relative overflow-hidden">
-          <div className="pointer-events-none absolute inset-0">
-            <div
-              className="absolute -right-10 -top-10 h-48 w-48 rounded-full opacity-10"
-              style={{
-                background: "radial-gradient(circle, white, transparent)",
-              }}
-            />
-          </div>
-          <div className="relative px-5 pb-6 pt-5">
+
+        {/* ── Header ───────────────────────────────────── */}
+        <div className="relative border-b border-white/[0.07] bg-[#060b15]">
+          {/* Thin blue top accent */}
+          <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/60 to-transparent" />
+
+          <div className="px-5 pb-5 pt-5">
             <div className="mb-4 flex items-center justify-between">
+              {/* Brand */}
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-card/20 backdrop-blur">
-                  <Activity className="h-5 w-5 text-primary-foreground" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/15 border border-blue-500/20">
+                  <Activity className="h-4 w-4 text-blue-400" />
                 </div>
                 <div>
-                  <div className="text-xl font-extrabold tracking-tight text-primary-foreground">
-                    MediQ
-                  </div>
-                  <div className="-mt-0.5 text-xs text-primary-foreground/60">
-                    Patient App
-                  </div>
+                  <div className="text-sm font-semibold text-white/90 leading-none">MediQ</div>
+                  <div className="text-[10px] text-white/35 leading-none mt-0.5">Patient App</div>
                 </div>
               </div>
+
+              {/* Actions */}
               <div className="flex items-center gap-2">
-                <button className="relative rounded-xl bg-card/10 p-2 backdrop-blur">
-                  <Bell className="h-4 w-4 text-primary-foreground" />
-                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" />
+                <button className="relative rounded-lg bg-white/[0.05] p-2 border border-white/[0.07] transition-colors hover:bg-white/[0.08]">
+                  <Bell className="h-3.5 w-3.5 text-white/50" />
+                  <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-rose-500" />
                 </button>
                 <Link
                   to="/"
-                  className="flex items-center gap-1 rounded-lg border border-primary-foreground/20 px-3 py-1.5 text-xs text-primary-foreground/60 transition-colors hover:text-primary-foreground"
+                  className="flex items-center gap-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 text-[11px] font-medium text-white/40 transition-colors hover:text-white/70"
                 >
                   <ArrowLeft className="h-3 w-3" /> Back
                 </Link>
               </div>
             </div>
 
-            {/* Live Status Bar */}
-            <div className="flex items-center gap-3 rounded-2xl bg-card/10 px-4 py-3 backdrop-blur-sm">
+            {/* Live status bar */}
+            <div className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.04] px-4 py-3">
               <div className="flex-1">
-                <div className="text-xs text-primary-foreground/60">
-                  {issuedToken ? `Serving for your Doctor` : "Now Serving (Global)"}
+                <div className="text-[10px] text-white/35 mb-0.5">
+                  {issuedToken ? "Serving for your Doctor" : "Now Serving"}
                 </div>
-                <div className="text-sm font-bold text-primary-foreground truncate">
-                  {currentServingToken 
+                <div className="text-sm font-semibold text-white/80 truncate">
+                  {currentServingToken
                     ? `${currentServingToken.token_number} — ${currentServingToken.doctor?.full_name || "Patient"}`
                     : "No one currently"}
                 </div>
               </div>
-              <div className="ml-auto text-right">
-                <div className="text-xs text-primary-foreground/60">My Appointments</div>
-                <div className="text-xl font-extrabold text-primary-foreground">
-                  {myTokens.length}
-                </div>
+              <div className="text-right border-l border-white/[0.07] pl-3 ml-1">
+                <div className="text-[10px] text-white/35 mb-0.5">My Appointments</div>
+                <div className="text-xl font-bold text-white/90">{myTokens.length}</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 space-y-4 px-5 py-5">
+        {/* ── Content ──────────────────────────────────── */}
+        <div className="flex-1 space-y-4 px-4 py-5">
+
           {/* HOME TAB */}
           {pTab === "home" && (
-            <div className="animate-fade-up space-y-4">
-              <div className="relative rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl">
-                <div className="absolute inset-0 bg-[linear-gradient(to_bottom_right,rgba(255,255,255,0.08),rgba(255,255,255,0.015))] pointer-events-none rounded-[28px]" />
-                <h2 className="text-xl font-bold text-white relative">
-                  Welcome, {profile?.full_name?.split(" ")[0] || "Patient"}!
+            <div className="space-y-4" style={{ animation: "fadeUp 0.3s ease forwards" }}>
+              {/* Welcome card */}
+              <div className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0f1520] p-6 shadow-[var(--shadow-card)]">
+                <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-white/[0.08]" />
+                <h2 className="text-base font-semibold text-white/90">
+                  Welcome back, {profile?.full_name?.split(" ")[0] || "Patient"}
                 </h2>
-                <p className="mt-1.5 text-sm text-white/60 relative">
-                  Easily book clinic tokens and monitor your wait time in real-time.
+                <p className="mt-1 text-sm text-white/40">
+                  Book clinic tokens and track your wait time in real-time.
                 </p>
                 <button
                   onClick={() => setPTab("book")}
-                  className="gradient-primary mt-4 w-full rounded-xl py-3 text-sm font-bold text-primary-foreground shadow-md transition-all hover:shadow-lg"
+                  className="mt-5 w-full rounded-xl bg-blue-500/15 border border-blue-500/25 py-3 text-sm font-semibold text-blue-300 transition-all duration-200 hover:bg-blue-500/20 hover:border-blue-500/35 hover:-translate-y-0.5"
                 >
-                  <CalendarPlus className="mr-2 inline h-4 w-4" /> Get New Token
+                  <CalendarPlus className="mr-2 inline h-4 w-4" />
+                  Get New Token
                 </button>
               </div>
 
+              {/* Active tokens */}
               {myTokens.length > 0 && (
-                <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
-                  <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground">
-                    <ListOrdered className="h-4 w-4 text-primary" /> Your Active Tokens
+                <div className="rounded-2xl border border-white/[0.07] bg-[#0f1520] p-5 shadow-[var(--shadow-card)]">
+                  <h3 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-white/40">
+                    <ListOrdered className="h-3.5 w-3.5" /> Your Active Tokens
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {myTokens.slice(0, 2).map((token) => (
-                      <div key={token.id} className="bg-secondary/50 rounded-xl p-3 border border-border/30">
-                        <div className="flex justify-between items-start mb-2">
-                           <span className="font-mono font-bold text-primary">{token.token_number}</span>
-                           <BadgeChip className={STATUS_META[token.status]?.badgeClass || ""}>
-                             {token.status.toUpperCase()}
-                           </BadgeChip>
+                      <div key={token.id} className="rounded-xl bg-white/[0.04] border border-white/[0.07] p-3.5">
+                        <div className="flex justify-between items-start mb-1.5">
+                          <span className="font-mono text-sm font-semibold text-blue-300">{token.token_number}</span>
+                          <BadgeChip className={`${STATUS_META[token.status]?.badgeClass || ""} border text-[10px]`}>
+                            {token.status.toUpperCase()}
+                          </BadgeChip>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                           Doctor: {token.doctor?.full_name || "General Doctor"}
+                        <div className="text-[11px] text-white/35">
+                          Dr. {token.doctor?.full_name || "General Doctor"}
                         </div>
                         {token.status === "waiting" && (
-                          <div className="mt-2 text-xs font-semibold text-warning">
-                            Estimated wait: ~{token.estimated_wait_minutes || "—"} mins
+                          <div className="mt-1.5 text-xs font-medium text-amber-400">
+                            {token.estimated_wait_minutes === 0
+                              ? "You're next!"
+                              : token.estimated_wait_minutes != null
+                                ? `~${token.estimated_wait_minutes} min wait`
+                                : "Calculating…"}
                           </div>
                         )}
                       </div>
@@ -227,20 +224,21 @@ const PatientApp = () => {
                 </div>
               )}
 
+              {/* Medicine reminders */}
               {myReminders.length > 0 && (
-                <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
-                  <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground">
-                    <Bell className="h-4 w-4 text-primary" /> Medicine Reminders
+                <div className="rounded-2xl border border-white/[0.07] bg-[#0f1520] p-5 shadow-[var(--shadow-card)]">
+                  <h3 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-white/40">
+                    <Bell className="h-3.5 w-3.5" /> Medicine Reminders
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     {myReminders.slice(0, 3).map((r) => (
-                      <div key={r.id} className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0 font-medium">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Pill className="w-4 h-4 text-primary" />
+                      <div key={r.id} className="flex items-center gap-3 py-2.5 border-b border-white/[0.05] last:border-0">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/15">
+                          <Pill className="h-3.5 w-3.5 text-blue-400" />
                         </div>
                         <div className="flex-1">
-                          <div className="text-sm text-white/90">{r.medicine_name}</div>
-                          <div className="text-xs text-white/40">{r.dose} • {r.reminder_times.join(", ")}</div>
+                          <div className="text-sm font-medium text-white/80">{r.medicine_name}</div>
+                          <div className="text-[11px] text-white/35">{r.dose} · {r.reminder_times.join(", ")}</div>
                         </div>
                       </div>
                     ))}
@@ -248,26 +246,19 @@ const PatientApp = () => {
                 </div>
               )}
 
-              <div className="rounded-2xl border border-border bg-secondary p-4">
-                <div className="mb-3 text-sm font-semibold text-foreground/80">
+              {/* Health highlights */}
+              <div className="rounded-2xl border border-white/[0.07] bg-[#0f1520] p-5">
+                <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/35">
                   Health Highlights
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {[
-                    {
-                      icon: <AlertCircle className="w-4 h-4 text-amber-400" />,
-                      tip: "Health alerts for your region will appear here.",
-                    },
-                    {
-                      icon: <Droplets className="w-4 h-4 text-blue-400" />,
-                      tip: "Remember to stay hydrated throughout the day.",
-                    },
+                    { icon: <AlertCircle className="h-3.5 w-3.5 text-amber-400" />, tip: "Health alerts for your region will appear here." },
+                    { icon: <Droplets className="h-3.5 w-3.5 text-blue-400" />,   tip: "Remember to stay hydrated throughout the day." },
                   ].map((h, i) => (
-                    <div key={i} className="flex items-start gap-3 border-b border-white/5 pb-3 last:border-0 last:pb-0">
-                      <div className="mt-0.5">{h.icon}</div>
-                      <div className="text-xs leading-relaxed text-white/60">
-                        {h.tip}
-                      </div>
+                    <div key={i} className="flex items-start gap-3 border-b border-white/[0.05] pb-2.5 last:border-0 last:pb-0">
+                      <div className="mt-0.5 shrink-0">{h.icon}</div>
+                      <div className="text-xs leading-relaxed text-white/45">{h.tip}</div>
                     </div>
                   ))}
                 </div>
@@ -277,39 +268,43 @@ const PatientApp = () => {
 
           {/* BOOK TAB */}
           {pTab === "book" && !issuedToken && (
-            <div className="animate-fade-up space-y-5 px-1">
+            <div className="space-y-5 px-1" style={{ animation: "fadeUp 0.3s ease forwards" }}>
               <div>
-                 <h2 className="text-xl font-bold text-foreground">Book Your Token</h2>
-                 <p className="text-sm text-muted-foreground mt-1">Skip the waiting room. Book from home.</p>
+                <h2 className="text-lg font-semibold text-white/90">Book Your Token</h2>
+                <p className="text-sm text-white/40 mt-1">Skip the waiting room. Book from home.</p>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {/* Doctor Selection */}
                 <div>
-                  <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
                     Select Doctor
                   </label>
                   <div className="grid gap-2">
                     {doctors.length === 0 ? (
-                      <div className="p-4 rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground">
+                      <div className="rounded-xl border border-dashed border-white/[0.10] p-5 text-center text-xs text-white/30">
                         No doctors available currently
                       </div>
                     ) : (
-                      doctors.map(d => (
+                      doctors.map((d) => (
                         <button
                           key={d.id}
                           onClick={() => setSelectedDoctor(d.id)}
-                          className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                            selectedDoctor === d.id 
-                              ? "bg-primary/10 border-primary shadow-sm" 
-                              : "bg-card border-border hover:border-primary/40"
+                          className={`flex items-center justify-between rounded-xl border p-4 text-left transition-all duration-150 ${
+                            selectedDoctor === d.id
+                              ? "border-blue-500/40 bg-blue-500/10"
+                              : "border-white/[0.08] bg-[#0f1520] hover:border-white/[0.14]"
                           }`}
                         >
-                          <div className="text-left">
-                            <div className="font-bold text-foreground text-sm">{d.full_name}</div>
-                            <div className="text-[11px] text-muted-foreground">{d.specialty} · {d.clinic_name || "MediQ Clinic"}</div>
+                          <div>
+                            <div className="text-sm font-semibold text-white/90">{d.full_name}</div>
+                            <div className="text-[11px] text-white/40 mt-0.5">{d.specialty} · {d.clinic_name || "MediQ Clinic"}</div>
                           </div>
-                          {selectedDoctor === d.id && <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-white"/></div>}
+                          {selectedDoctor === d.id && (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500">
+                              <div className="h-2 w-2 rounded-full bg-white" />
+                            </div>
+                          )}
                         </button>
                       ))
                     )}
@@ -318,29 +313,31 @@ const PatientApp = () => {
 
                 {/* Symptom Tags */}
                 <div>
-                  <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Chief Complaint (Symptoms)
+                  <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
+                    Chief Complaint
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {loadingTags ? (
-                       <div className="flex gap-2">
-                         {[1,2,3].map(i => <div key={i} className="h-8 w-20 rounded-full bg-secondary animate-pulse"/>)}
-                       </div>
+                      <div className="flex gap-2">
+                        {[1, 2, 3].map((i) => (<div key={i} className="h-8 w-20 rounded-full bg-white/[0.05] animate-pulse" />))}
+                      </div>
                     ) : (
-                      symptomTags.map(tag => {
+                      symptomTags.map((tag) => {
                         const isSelected = selectedTags.includes(tag.label);
                         return (
                           <button
                             key={tag.id}
-                            onClick={() => setSelectedTags(prev => 
-                              isSelected ? prev.filter(t => t !== tag.label) : [...prev, tag.label]
-                            )}
-                            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold border transition-all ${
+                            onClick={() =>
+                              setSelectedTags((prev) =>
+                                isSelected ? prev.filter((t) => t !== tag.label) : [...prev, tag.label]
+                              )
+                            }
+                            className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-medium transition-all duration-150 ${
                               isSelected
                                 ? tag.is_emergency
-                                  ? "bg-destructive/20 border-destructive text-destructive shadow-sm"
-                                  : "bg-primary border-primary text-primary-foreground shadow-md -translate-y-0.5"
-                                : "bg-card border-border text-muted-foreground hover:border-primary/30"
+                                  ? "border-rose-500/40 bg-rose-500/15 text-rose-300"
+                                  : "border-blue-500/40 bg-blue-500/15 text-blue-300"
+                                : "border-white/[0.08] bg-[#0f1520] text-white/50 hover:border-white/[0.14] hover:text-white/70"
                             }`}
                           >
                             <span>{tag.emoji}</span>
@@ -354,24 +351,24 @@ const PatientApp = () => {
 
                 {/* Custom Symptoms */}
                 <div>
-                  <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
+                  <label className="mb-2.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
                     Additional Details
                   </label>
                   <textarea
-                    placeholder="Describe how you're feeling..."
+                    placeholder="Describe how you're feeling…"
                     value={customSymptoms}
                     onChange={(e) => setCustomSymptoms(e.target.value)}
                     rows={3}
-                    className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-xl border border-white/[0.08] bg-[#0f1520] px-4 py-3 text-sm text-white/80 placeholder:text-white/25 outline-none transition-colors focus:border-blue-500/40 resize-none"
                   />
                 </div>
 
                 <button
                   onClick={handleBookToken}
                   disabled={booking || !selectedDoctor}
-                  className="gradient-primary w-full rounded-2xl py-4 text-base font-bold text-primary-foreground shadow-lg transition-all hover:scale-[1.01] disabled:opacity-50"
+                  className="w-full rounded-xl bg-blue-500/15 border border-blue-500/30 py-4 text-sm font-semibold text-blue-300 transition-all duration-200 hover:bg-blue-500/22 hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
                 >
-                  {booking ? "Confirming Booking..." : "Generate Token →"}
+                  {booking ? "Confirming…" : "Generate Token →"}
                 </button>
               </div>
             </div>
@@ -379,44 +376,51 @@ const PatientApp = () => {
 
           {/* ISSUED TOKEN VIEW */}
           {pTab === "book" && issuedToken && (
-            <div className="animate-fade-up space-y-6 text-center py-4">
-              <div className="mx-auto w-32 h-32 rounded-3xl gradient-primary flex flex-col items-center justify-center shadow-2xl">
-                 <span className="text-[10px] font-bold uppercase tracking-widest text-primary-foreground/60 mb-1">Token</span>
-                 <span className="text-3xl font-extrabold text-primary-foreground">{issuedToken.token_number}</span>
+            <div className="space-y-5 text-center py-4" style={{ animation: "fadeUp 0.3s ease forwards" }}>
+              {/* Token display */}
+              <div className="mx-auto flex h-32 w-32 flex-col items-center justify-center rounded-3xl border border-blue-500/25 bg-blue-500/12">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-blue-400/60 mb-1">Token</span>
+                <span className="text-3xl font-bold text-blue-300">{issuedToken.token_number}</span>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Successfully Booked!</h2>
-                <p className="text-muted-foreground text-sm mt-1">Visit MediQ Clinic today</p>
+                <h2 className="text-lg font-semibold text-white/90">Successfully Booked</h2>
+                <p className="text-sm text-white/40 mt-1">Visit MediQ Clinic today</p>
               </div>
 
-              <div className="bg-primary/5 border border-primary/20 rounded-3xl p-6 mx-2">
-                 <div className="text-xs font-semibold text-primary/70 uppercase tracking-wide mb-1">Clinic In-Time</div>
-                 <div className="text-4xl font-black text-primary">~{issuedToken.estimated_wait_minutes || "25"} min</div>
-                 <div className="text-[10px] text-muted-foreground mt-2 italic font-medium">Estimated wait may change based on urgency</div>
+              <div className="rounded-2xl border border-blue-500/15 bg-blue-500/8 p-6 mx-2">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-blue-400/60 mb-1">Estimated Wait</div>
+                {issuedToken.estimated_wait_minutes === 0 ? (
+                  <div className="text-2xl font-bold text-emerald-400">You're next!</div>
+                ) : (
+                  <div className="text-4xl font-bold text-blue-300">~{issuedToken.estimated_wait_minutes ?? "—"} min</div>
+                )}
+                <div className="text-[10px] text-white/30 mt-2">May change based on urgency</div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 px-2">
-                <div className="bg-secondary/80 rounded-2xl p-4 border border-border/40">
-                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Status</div>
-                  <div className="font-bold text-foreground text-sm">Waitlisted</div>
+                <div className="rounded-xl border border-white/[0.07] bg-[#0f1520] p-4">
+                  <div className="text-[10px] text-white/30 uppercase font-semibold tracking-wider mb-1">Status</div>
+                  <div className="text-sm font-semibold text-white/80">Waitlisted</div>
                 </div>
-                <div className="bg-secondary/80 rounded-2xl p-4 border border-border/40">
-                  <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Clinic Date</div>
-                  <div className="font-bold text-foreground text-sm">{new Date().toLocaleDateString('en-IN', {day:'numeric', month:'short'})}</div>
+                <div className="rounded-xl border border-white/[0.07] bg-[#0f1520] p-4">
+                  <div className="text-[10px] text-white/30 uppercase font-semibold tracking-wider mb-1">Date</div>
+                  <div className="text-sm font-semibold text-white/80">
+                    {new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-3 px-4 mt-6">
+              <div className="space-y-2.5 px-4 mt-4">
                 <button
                   onClick={() => { setIssuedToken(null); setPTab("status"); }}
-                  className="w-full py-4 rounded-2xl bg-foreground text-background font-bold text-sm shadow-md"
+                  className="w-full rounded-xl border border-white/[0.10] bg-white/[0.06] py-3.5 text-sm font-semibold text-white/80 transition-all hover:bg-white/[0.08]"
                 >
                   Track Live Queue
                 </button>
                 <button
                   onClick={() => { setIssuedToken(null); setSelectedDoctor(""); setSelectedTags([]); setCustomSymptoms(""); }}
-                  className="w-full py-4 rounded-2xl border border-border text-muted-foreground font-semibold text-sm hover:bg-secondary/50"
+                  className="w-full rounded-xl border border-white/[0.07] py-3.5 text-sm font-medium text-white/40 transition-colors hover:text-white/60"
                 >
                   Book for Family Member
                 </button>
@@ -426,161 +430,161 @@ const PatientApp = () => {
 
           {/* STATUS TAB */}
           {pTab === "status" && (
-            <div className="animate-fade-up space-y-4">
-              <h2 className="text-lg font-bold text-foreground">Live Queue</h2>
-              
+            <div className="space-y-4" style={{ animation: "fadeUp 0.3s ease forwards" }}>
+              <h2 className="text-base font-semibold text-white/90">Live Queue</h2>
+
               <div className="flex gap-2">
                 <input
                   value={searchQ}
                   onChange={(e) => setSearchQ(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && searchPatient()}
                   placeholder="Enter token number (e.g. MQ-001)"
-                  className="flex-1 rounded-xl border border-border bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="flex-1 rounded-xl border border-white/[0.08] bg-[#0f1520] px-4 py-3 text-sm text-white/80 placeholder:text-white/25 outline-none focus:border-blue-500/40"
                 />
                 <button
                   onClick={searchPatient}
-                  className="gradient-primary rounded-xl px-4 py-3 text-primary-foreground shadow-sm"
+                  className="rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-3 text-white/50 transition-colors hover:bg-white/[0.08] hover:text-white/80"
                 >
-                  <Search className="h-5 w-5" />
+                  <Search className="h-4 w-4" />
                 </button>
               </div>
 
               {foundPat === "notfound" && (
-                <div className="rounded-2xl border border-dashed border-white/10 py-12 text-center text-white/40">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                    <Search className="w-6 h-6 opacity-20" />
+                <div className="rounded-2xl border border-dashed border-white/[0.08] py-12 text-center">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.04] mb-3">
+                    <Search className="h-5 w-5 text-white/20" />
                   </div>
-                  <div className="font-bold text-white/80">Token Not Found</div>
-                  <p className="text-xs px-10 mt-1 uppercase tracking-wide opacity-60">Double check your input or visit history</p>
+                  <div className="text-sm font-medium text-white/50">Token Not Found</div>
+                  <p className="text-xs text-white/25 mt-1">Double check your input</p>
                 </div>
               )}
 
               {foundPat && foundPat !== "notfound" && (
-                <div className="animate-fade-up rounded-2xl border border-border bg-card p-5 shadow-card">
+                <div className="rounded-2xl border border-white/[0.07] bg-[#0f1520] p-5 shadow-[var(--shadow-card)]" style={{ animation: "fadeUp 0.25s ease forwards" }}>
                   <div className="mb-4 flex items-start justify-between">
                     <div>
-                      <div className="text-lg font-bold text-foreground">
-                        {foundPat.token_number}
-                      </div>
-                      <div className="text-xs text-muted-foreground uppercase font-semibold">
-                        {foundPat.doctor?.full_name || "Registered Patient"}
-                      </div>
+                      <div className="text-base font-semibold text-white/90">{foundPat.token_number}</div>
+                      <div className="text-xs text-white/35 mt-0.5">{foundPat.doctor?.full_name || "Registered Patient"}</div>
                     </div>
-                    <BadgeChip className={STATUS_META[foundPat.status]?.badgeClass || ""}>
+                    <BadgeChip className={`${STATUS_META[foundPat.status]?.badgeClass || ""} border text-[10px]`}>
                       {foundPat.status.toUpperCase()}
                     </BadgeChip>
                   </div>
 
                   {foundPat.status === "waiting" && (
-                    <div className="space-y-4">
-                      <div className="rounded-2xl border border-warning/20 bg-warning/5 p-4 text-center">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-warning/80">
-                          Estimated Wait
-                        </div>
-                        <div className="text-3xl font-black text-warning">
-                          ~{foundPat.estimated_wait_minutes || "—"} min
-                        </div>
+                    <div className="space-y-3">
+                      <div className="rounded-xl border border-amber-500/15 bg-amber-500/8 p-4 text-center">
+                        <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-400/60">Estimated Wait</div>
+                        {foundPat.estimated_wait_minutes === 0 ? (
+                          <div className="text-xl font-bold text-emerald-400 mt-1">You're next!</div>
+                        ) : (
+                          <div className="text-2xl font-bold text-amber-400 mt-1">
+                            {foundPat.estimated_wait_minutes != null ? `~${foundPat.estimated_wait_minutes} min` : "—"}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-3 bg-secondary/50 rounded-xl p-3 border border-border/30">
-                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary"><User className="w-5 h-5"/></div>
-                         <div className="flex-1">
-                            <div className="text-xs font-bold text-foreground">Dr. {foundPat.doctor?.full_name || "Assigned Doctor"}</div>
-                            <div className="text-[10px] text-muted-foreground">{foundPat.doctor?.specialty || "General Physician"}</div>
-                         </div>
+                      <div className="flex items-center gap-3 rounded-xl bg-white/[0.04] border border-white/[0.07] p-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/15">
+                          <User className="h-4 w-4 text-blue-400" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-white/80">Dr. {foundPat.doctor?.full_name || "Assigned Doctor"}</div>
+                          <div className="text-[10px] text-white/35">{foundPat.doctor?.specialty || "General Physician"}</div>
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {foundPat.status === "serving" && (
-                     <div className="rounded-2xl border border-primary/20 bg-primary/10 p-5 text-center animate-pulse-soft">
-                        <div className="text-xs font-black uppercase tracking-widest text-primary mb-1">It's Your Turn!</div>
-                        <p className="text-xs text-primary/80">Please proceed to the doctor's cabin</p>
-                     </div>
+                    <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-5 text-center">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-1">It's Your Turn!</div>
+                      <p className="text-[11px] text-blue-400/70">Please proceed to the doctor's cabin</p>
+                    </div>
                   )}
                 </div>
               )}
 
-              <div className="mt-8">
-                 <h3 className="text-sm font-bold text-foreground mb-3 px-1">Your Patient History</h3>
-                 <div className="space-y-3">
-                   {myTokens.length === 0 ? (
-                      <div className="p-10 text-center text-xs text-muted-foreground border border-border/50 rounded-2xl uppercase tracking-widest">No history yet</div>
-                   ) : (
-                     myTokens.map(t => (
-                       <div key={t.id} className="flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50">
-                          <div className="flex items-center gap-3">
-                             <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-xs">{t.token_number.split('-')[1]}</div>
-                             <div>
-                                <div className="text-sm font-bold text-foreground capitalize">{t.status}</div>
-                                <div className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString()}</div>
-                             </div>
+              <div className="mt-6">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-white/35 mb-3 px-1">Your Patient History</h3>
+                <div className="space-y-2">
+                  {myTokens.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/[0.08] p-8 text-center text-xs text-white/25 uppercase tracking-widest">
+                      No history yet
+                    </div>
+                  ) : (
+                    myTokens.map((t) => (
+                      <div key={t.id} className="flex items-center justify-between rounded-xl bg-[#0f1520] border border-white/[0.07] p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.05] border border-white/[0.07] text-xs font-semibold text-white/60">
+                            {t.token_number.split("-")[1]}
                           </div>
-                          <ChevronRight className="w-4 h-4 text-muted-foreground/30"/>
-                       </div>
-                     ))
-                   )}
-                 </div>
+                          <div>
+                            <div className="text-sm font-medium text-white/80 capitalize">{t.status}</div>
+                            <div className="text-[10px] text-white/30">{new Date(t.created_at).toLocaleDateString()}</div>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-white/20" />
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}
 
           {/* PRESCRIPTIONS TAB */}
           {pTab === "prescriptions" && (
-            <div className="animate-fade-up space-y-4">
-              <h2 className="text-lg font-bold text-foreground">My Prescriptions</h2>
+            <div className="space-y-4" style={{ animation: "fadeUp 0.3s ease forwards" }}>
+              <h2 className="text-base font-semibold text-white/90">My Prescriptions</h2>
+
               {myPrescriptions.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 py-16 text-center text-white/40">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                    <Pill className="w-6 h-6 opacity-20" />
+                <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] py-14 text-center">
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.05] mb-3">
+                    <Pill className="h-5 w-5 text-white/20" />
                   </div>
-                  <div className="font-bold text-white/80">No Prescriptions Yet</div>
-                  <p className="mt-2 text-xs px-12 opacity-60">After your visit is complete, your doctor's prescriptions will show up here.</p>
+                  <div className="text-sm font-medium text-white/50">No Prescriptions Yet</div>
+                  <p className="mt-1.5 text-xs text-white/25 px-10">After your visit, your doctor's prescriptions will appear here.</p>
                 </div>
               ) : (
                 myPrescriptions.map((rx) => (
-                  <div key={rx.id} className="rounded-3xl border border-border bg-card p-6 shadow-card">
+                  <div key={rx.id} className="rounded-2xl border border-white/[0.07] bg-[#0f1520] p-6 shadow-[var(--shadow-card)]">
                     <div className="mb-4 flex items-start justify-between">
                       <div>
-                        <div className="text-base font-black text-foreground">
-                          Dr. {rx.doctor_name || "Clinic Doctor"}
-                        </div>
-                        <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">
-                          {rx.token_number} ·{" "}
-                          {new Date(rx.created_at).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                        <div className="text-sm font-semibold text-white/90">Dr. {rx.doctor_name || "Clinic Doctor"}</div>
+                        <div className="text-[10px] text-white/35 mt-0.5 uppercase font-medium tracking-wider">
+                          {rx.token_number} · {new Date(rx.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                         </div>
                       </div>
                       {rx.diagnosis && (
-                        <BadgeChip className="bg-primary/10 text-primary border-primary/20">
+                        <BadgeChip className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px]">
                           {rx.diagnosis}
                         </BadgeChip>
                       )}
                     </div>
-                    <div className="space-y-2.5">
+
+                    <div className="space-y-2">
                       {rx.prescription_medicines.map((m, i) => (
-                        <div key={i} className="rounded-2xl border border-border/40 bg-secondary/80 px-4 py-3 shadow-sm hover:shadow-md transition-all">
-                          <div className="font-bold text-primary text-sm flex items-center gap-2">
-                            <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px]"><Pill className="w-3 h-3 text-primary" /></span>
+                        <div key={i} className="rounded-xl border border-white/[0.07] bg-white/[0.04] px-4 py-3">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-blue-300">
+                            <Pill className="h-3.5 w-3.5" />
                             {m.medicine_name}
                           </div>
-                          <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-3">
+                          <div className="mt-1 text-[11px] text-white/35 flex items-center gap-2">
                             <span>{m.dose}</span>
-                            <span className="w-1 h-1 rounded-full bg-border"/>
+                            <span className="text-white/20">·</span>
                             <span>{m.frequency}</span>
-                            <span className="w-1 h-1 rounded-full bg-border"/>
-                            <span className="font-semibold">{m.duration_days} days</span>
+                            <span className="text-white/20">·</span>
+                            <span className="font-medium text-white/50">{m.duration_days}d</span>
                           </div>
                         </div>
                       ))}
                     </div>
+
                     {rx.notes && (
-                       <div className="mt-4 pt-4 border-t border-border/30">
-                          <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Doctor's Advice</div>
-                          <p className="text-xs text-foreground/80 italic">{rx.notes}</p>
-                       </div>
+                      <div className="mt-4 pt-4 border-t border-white/[0.07]">
+                        <div className="text-[10px] font-semibold uppercase tracking-wider text-white/30 mb-1">Doctor's Advice</div>
+                        <p className="text-xs text-white/55 italic leading-relaxed">{rx.notes}</p>
+                      </div>
                     )}
                   </div>
                 ))
@@ -590,39 +594,42 @@ const PatientApp = () => {
 
           {/* PROFILE TAB */}
           {pTab === "profile" && (
-            <div className="animate-fade-up space-y-4">
-              <div className="rounded-3xl border border-border bg-card p-6 text-center shadow-card relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/5 via-primary to-primary/5"/>
-                <div className="gradient-primary mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full text-3xl font-black text-primary-foreground shadow-xl ring-4 ring-card">
+            <div className="space-y-4" style={{ animation: "fadeUp 0.3s ease forwards" }}>
+              {/* Profile card */}
+              <div className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0f1520] p-6 text-center shadow-[var(--shadow-card)]">
+                <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-white/[0.10]" />
+                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-blue-500/15 border border-blue-500/20 text-2xl font-bold text-blue-300">
                   {profile?.full_name?.charAt(0).toUpperCase() || "P"}
                 </div>
-                <div className="text-xl font-black text-foreground">
-                  {profile?.full_name || "Patient User"}
-                </div>
-                <div className="text-sm font-medium text-muted-foreground bg-secondary/50 rounded-full px-4 py-1 inline-block mt-2">
+                <div className="text-base font-semibold text-white/90">{profile?.full_name || "Patient User"}</div>
+                <div className="mt-1.5 inline-block rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-white/40">
                   {profile?.phone || profile?.email || "No contact info"}
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-border bg-card p-3 shadow-card divide-y divide-border/20">
+              {/* Stats list */}
+              <div className="rounded-2xl border border-white/[0.07] bg-[#0f1520] divide-y divide-white/[0.05] shadow-[var(--shadow-card)]">
                 {[
-                  { label: "Active Tokens", value: myTokens.filter(t => t.status === 'waiting').length, icon: ListOrdered },
-                  { label: "Family Profiles", value: "Available", icon: User },
-                  { label: "Clinic Location", value: "Nearby", icon: MapPin },
+                  { label: "Active Tokens",    value: myTokens.filter((t) => t.status === "waiting").length, icon: ListOrdered },
+                  { label: "Family Profiles",  value: "Available", icon: User },
+                  { label: "Clinic Location",  value: "Nearby",    icon: MapPin },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between p-4 px-2">
+                  <div key={item.label} className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground"><item.icon className="w-4 h-4"/></div>
-                      <span className="text-sm font-semibold text-foreground/80">{item.label}</span>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.05] border border-white/[0.07]">
+                        <item.icon className="h-3.5 w-3.5 text-white/40" />
+                      </div>
+                      <span className="text-sm text-white/60">{item.label}</span>
                     </div>
-                    <span className="text-sm font-black text-primary">{item.value}</span>
+                    <span className="text-sm font-semibold text-blue-300">{item.value}</span>
                   </div>
                 ))}
               </div>
 
+              {/* Sign out */}
               <button
                 onClick={handleLogout}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/20 bg-destructive/5 py-4 text-sm font-bold text-destructive transition-colors hover:bg-destructive/10"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/[0.06] py-3.5 text-sm font-medium text-rose-400 transition-colors hover:bg-rose-500/[0.10]"
               >
                 <LogOut className="h-4 w-4" /> Sign Out
               </button>
@@ -630,30 +637,34 @@ const PatientApp = () => {
           )}
         </div>
 
-        {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 border-t border-white/10 bg-[#08111f]/80 backdrop-blur-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)]">
-          <div className="flex items-center justify-around py-2">
-            {bottomNav.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setPTab(item.id)}
-                className={`flex flex-col items-center gap-0.5 rounded-xl px-4 py-2 transition-all duration-300 ${
-                  pTab === item.id ? "text-primary scale-110" : "text-muted-foreground hover:bg-secondary/50"
-                }`}
-              >
-                <item.icon className={`h-5 w-5 ${pTab === item.id ? "fill-primary/10" : ""}`} />
-                <span className={`text-[10px] font-bold ${pTab === item.id ? "opacity-100" : "opacity-60"}`}>{item.label}</span>
-                {pTab === item.id && (
-                  <div className="bg-primary mt-1 h-1 w-1 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-                )}
-              </button>
-            ))}
+        {/* ── Bottom Navigation ─────────────────────────── */}
+        <div className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 border-t border-white/[0.07] bg-[#060b15]/95 backdrop-blur-xl">
+          <div className="flex items-center justify-around py-2 px-2">
+            {bottomNav.map((item) => {
+              const isActive = pTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setPTab(item.id)}
+                  className={`flex flex-col items-center gap-0.5 rounded-xl px-4 py-2 transition-all duration-200 ${
+                    isActive ? "text-blue-400" : "text-white/30 hover:text-white/55"
+                  }`}
+                >
+                  {/* Active pill indicator */}
+                  <div className={`mb-1 h-0.5 w-4 rounded-full transition-all duration-200 ${isActive ? "bg-blue-400" : "bg-transparent"}`} />
+                  <item.icon className="h-[18px] w-[18px]" />
+                  <span className={`text-[10px] font-medium leading-none mt-0.5 ${isActive ? "opacity-100" : "opacity-60"}`}>
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
+
       </div>
     </div>
   );
 };
 
 export default PatientApp;
-

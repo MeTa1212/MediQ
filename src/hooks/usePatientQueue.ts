@@ -368,6 +368,17 @@ export function usePatientQueue() {
       const emergencyTags = ["Emergency", "Injury / Wound", "Chest Pain"];
       const isEmergency = selectedTags.some((tag) => emergencyTags.includes(tag));
 
+      // Count how many patients are already waiting or being served by this doctor today
+      const { count: queueCount } = await supabase
+        .from("tokens")
+        .select("id", { count: "exact", head: true })
+        .eq("doctor_id", doctorId)
+        .eq("clinic_date", today)
+        .in("status", ["waiting", "serving"]);
+
+      const AVG_MINUTES_PER_PATIENT = 10;
+      const estimatedWait = (queueCount ?? 0) * AVG_MINUTES_PER_PATIENT;
+
       const { data, error } = await supabase
         .from("tokens")
         .insert({
@@ -379,6 +390,7 @@ export function usePatientQueue() {
           priority: isEmergency ? "critical" : "normal",
           symptom_tags: selectedTags,
           custom_symptoms: customSymptoms || null,
+          estimated_wait_minutes: estimatedWait,
         })
         .select()
         .single();

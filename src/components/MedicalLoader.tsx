@@ -14,66 +14,46 @@ export function MedicalLoader({ message = "Loading..." }: { message?: string }) 
   }, []);
 
   return (
-    <div className="flex min-h-[300px] w-full flex-col items-center justify-center space-y-8">
+    <div className="flex min-h-[280px] w-full flex-col items-center justify-center gap-8">
+      {/* Icon container */}
       <div className="relative">
-        <style>{`
-          @keyframes orbit {
-            from { transform: rotate(0deg) translateX(45px) rotate(0deg); }
-            to { transform: rotate(360deg) translateX(45px) rotate(-360deg); }
-          }
-          @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-          }
-          .orbit-dot {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            border-radius: full;
-            background: theme('colors.primary.DEFAULT');
-            animation: orbit 3s linear infinite;
-          }
-        `}</style>
+        {/* Soft ambient glow */}
+        <div className="absolute -inset-8 rounded-full bg-blue-500/8 blur-2xl" />
 
-        {/* Outer Glows */}
-        <div className="absolute -inset-10 animate-pulse rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute -inset-4 animate-ping rounded-full bg-primary/5 opacity-50 duration-[3000ms]" />
+        {/* Spinning ring */}
+        <div
+          className="absolute -inset-4 rounded-full border-2 border-transparent"
+          style={{
+            borderTopColor: "rgba(59,130,246,0.35)",
+            borderRightColor: "rgba(59,130,246,0.12)",
+            animation: "spinSlow 2.4s linear infinite",
+          }}
+        />
 
-        {/* Orbiting particles */}
-        <div className="absolute inset-0">
-          {[0, 72, 144, 216, 288].map((deg, i) => (
-            <div 
-              key={i}
-              className="absolute top-1/2 left-1/2 w-1.5 h-1.5 rounded-full bg-primary/40 shadow-[0_0_8px_rgba(59,130,246,0.6)]"
-              style={{
-                transform: `rotate(${deg}deg) translateX(48px)`,
-                opacity: 0.6 - (i * 0.1)
-              }}
-            />
-          ))}
-        </div>
-        
-        {/* Core Container */}
-        <div className="relative z-10 flex h-20 w-20 items-center justify-center rounded-[24px] border border-white/20 bg-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl">
-          <div className="absolute inset-x-4 top-0 h-px bg-white/40" />
-          <div className="absolute inset-y-4 left-0 w-px bg-white/10" />
-          
-          <div className="transition-all duration-500 transform scale-110">
-            <CurrentIcon className="h-9 w-9 text-primary animate-pulse" strokeWidth={2.5} />
-          </div>
+        {/* Core */}
+        <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.10] bg-white/[0.05] backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+          <div className="absolute inset-x-3 top-0 h-px bg-white/[0.12]" />
+          <CurrentIcon
+            className="h-7 w-7 text-blue-400 transition-all duration-500"
+            strokeWidth={1.75}
+          />
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-2">
-        <div className="text-xs font-black uppercase tracking-[0.4em] text-white/50 animate-pulse text-center">
+      {/* Text */}
+      <div className="flex flex-col items-center gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/35">
           {message}
-        </div>
+        </p>
         <div className="flex gap-1.5">
-          {[0, 1, 2].map(i => (
-            <div 
-              key={i} 
-              className="h-1 w-1 rounded-full bg-primary/40 animate-bounce" 
-              style={{ animationDelay: `${i * 150}ms` }}
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-1 w-1 rounded-full bg-blue-500/50"
+              style={{
+                animation: `pulseSoft 1.4s ease-in-out infinite`,
+                animationDelay: `${i * 200}ms`,
+              }}
             />
           ))}
         </div>
