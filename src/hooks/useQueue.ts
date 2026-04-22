@@ -102,22 +102,30 @@ export function useQueue(): UseQueueReturn {
       return;
     }
 
-    const mapped: QueuePatient[] = (data || []).map((row: any) => ({
-      id: row.id,
-      token_number: row.token_number,
-      status: row.status as QueuePatient["status"],
-      priority: row.priority as QueuePatient["priority"],
-      symptom_tags: Array.isArray(row.symptom_tags) ? row.symptom_tags : [],
-      custom_symptoms: row.custom_symptoms ?? null,
-      estimated_wait_minutes: row.estimated_wait_minutes ?? null,
-      created_at: row.created_at,
-      called_at: row.called_at ?? null,
-      completed_at: row.completed_at ?? null,
-      patient_id: row.patient_id,
-      patient_name: row.profiles?.full_name ?? "Unknown",
-      patient_phone: row.profiles?.phone ?? null,
-      patient_age: row.profiles?.patient_profiles?.age ?? null,
-    }));
+    const mapped: QueuePatient[] = (data || []).map((row: any) => {
+      // Handle profiles as array or single object (Supabase join ambiguity)
+      const profileData = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+      const patientProfileData = Array.isArray(profileData?.patient_profiles)
+        ? profileData?.patient_profiles[0]
+        : profileData?.patient_profiles;
+
+      return {
+        id: row.id,
+        token_number: row.token_number,
+        status: row.status as QueuePatient["status"],
+        priority: row.priority as QueuePatient["priority"],
+        symptom_tags: Array.isArray(row.symptom_tags) ? row.symptom_tags : [],
+        custom_symptoms: row.custom_symptoms ?? null,
+        estimated_wait_minutes: row.estimated_wait_minutes ?? null,
+        created_at: row.created_at,
+        called_at: row.called_at ?? null,
+        completed_at: row.completed_at ?? null,
+        patient_id: row.patient_id,
+        patient_name: profileData?.full_name ?? "Patient",
+        patient_phone: profileData?.phone ?? null,
+        patient_age: patientProfileData?.age ?? null,
+      };
+    });
 
     setQueue(mapped);
     setLoading(false);
