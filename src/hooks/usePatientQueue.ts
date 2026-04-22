@@ -244,7 +244,36 @@ export function usePatientQueue() {
       };
     });
 
-    setMyTokens(mapped);
+    // Dynamically compute wait times based on queue position (Issue 1)
+    const MINUTES_PER_PATIENT = 8;
+    const withDynamicWait = await Promise.all(
+      mapped.map(async (token) => {
+        if (token.status !== "waiting") {
+          return token;
+        }
+
+        // Count patients ahead: those with status waiting/serving who joined before this patient
+        const { count, error: countError } = await supabase
+          .from("tokens")
+          .select("id", { count: "exact", head: true })
+          .eq("doctor_id", token.doctor_id)
+          .eq("clinic_date", today)
+          .in("status", ["waiting", "serving"])
+          .lt("created_at", token.created_at);
+
+        if (countError) {
+          console.error("Error computing wait time:", countError);
+          return token; // fallback to stored value
+        }
+
+        return {
+          ...token,
+          estimated_wait_minutes: (count ?? 0) * MINUTES_PER_PATIENT,
+        };
+      })
+    );
+
+    setMyTokens(withDynamicWait);
   }, [profile?.id]);
 
   const fetchMyPrescriptions = useCallback(async () => {
@@ -376,7 +405,7 @@ export function usePatientQueue() {
         .eq("clinic_date", today)
         .in("status", ["waiting", "serving"]);
 
-      const AVG_MINUTES_PER_PATIENT = 10;
+      const AVG_MINUTES_PER_PATIENT = 8;
       const estimatedWait = (queueCount ?? 0) * AVG_MINUTES_PER_PATIENT;
 
       const { data, error } = await supabase
@@ -451,6 +480,26 @@ export function usePatientQueue() {
     void fetchMyPrescriptions();
     void fetchMyReminders();
   }, [profile?.id, fetchMyTokens, fetchMyPrescriptions, fetchMyReminders]);
+
+  // Real-time subscription: re-fetch tokens when ANY token changes (Issue 1)
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const channel = supabase
+      .channel("patient-queue-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tokens" },
+        () => {
+          void fetchMyTokens();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [profile?.id, fetchMyTokens]);
 
   return {
     bookToken,
