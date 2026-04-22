@@ -15,6 +15,7 @@ import {
   LogOut,
   MapPin,
   ChevronRight,
+  ChevronDown,
   Pill,
   Droplets,
   AlertCircle,
@@ -58,6 +59,7 @@ const PatientApp = () => {
   const [issuedToken, setIssuedToken] = useState<any | null>(null);
   const [searchQ, setSearchQ] = useState("");
   const [foundPat, setFoundPat] = useState<any | "notfound" | null>(null);
+  const [expandedTokenId, setExpandedTokenId] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
@@ -505,27 +507,92 @@ const PatientApp = () => {
               )}
 
               <div className="mt-6">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-white/35 mb-3 px-1">Your Patient History</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-white/35 mb-3 px-1">Your Queue & History</h3>
                 <div className="space-y-2">
                   {myTokens.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-white/[0.08] p-8 text-center text-xs text-white/25 uppercase tracking-widest">
                       No history yet
                     </div>
                   ) : (
-                    myTokens.map((t) => (
-                      <div key={t.id} className="flex items-center justify-between rounded-xl bg-[#0f1520] border border-white/[0.07] p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.05] border border-white/[0.07] text-xs font-semibold text-white/60">
-                            {t.token_number.split("-")[1]}
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-white/80 capitalize">{t.status}</div>
-                            <div className="text-[10px] text-white/30">{new Date(t.created_at).toLocaleDateString()}</div>
-                          </div>
+                    myTokens.map((t) => {
+                      const isExpanded = expandedTokenId === t.id;
+                      const isActive = t.status === "waiting" || t.status === "serving";
+                      return (
+                        <div key={t.id} className="rounded-xl bg-[#0f1520] border border-white/[0.07] overflow-hidden">
+                          <button
+                            onClick={() => setExpandedTokenId(isExpanded ? null : t.id)}
+                            className="flex items-center justify-between w-full p-4 text-left transition-colors hover:bg-white/[0.02]"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold ${
+                                isActive ? "bg-blue-500/10 border-blue-500/20 text-blue-300" : "bg-white/[0.05] border-white/[0.07] text-white/60"
+                              }`}>
+                                {t.token_number.split("-")[1] || t.token_number}
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-white/80">
+                                  {t.token_number}
+                                  <BadgeChip className={`ml-2 ${STATUS_META[t.status]?.badgeClass || STATUS_META["waiting"]?.badgeClass} border text-[9px]`}>
+                                    {t.status === "done" ? "COMPLETED" : t.status.toUpperCase()}
+                                  </BadgeChip>
+                                </div>
+                                <div className="text-[10px] text-white/30 mt-0.5">Dr. {t.doctor?.full_name || "Clinic Doctor"} · {new Date(t.created_at).toLocaleDateString()}</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {isActive && (
+                                <span className="text-xs font-semibold text-amber-400">
+                                  {t.status === "serving" ? "Your turn!" : t.estimated_wait_minutes === 0 ? "Next!" : `~${t.estimated_wait_minutes ?? 0} min`}
+                                </span>
+                              )}
+                              <ChevronDown className={`h-4 w-4 text-white/20 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
+                            </div>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="px-4 pb-4 pt-1 border-t border-white/[0.05] space-y-2.5" style={{ animation: "fadeUp 0.2s ease forwards" }}>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-3">
+                                  <div className="text-[9px] text-white/30 uppercase font-semibold tracking-wider">Doctor</div>
+                                  <div className="text-xs font-medium text-white/80 mt-0.5">Dr. {t.doctor?.full_name || "Clinic Doctor"}</div>
+                                  <div className="text-[10px] text-white/35">{t.doctor?.specialty || "General Physician"}</div>
+                                </div>
+                                <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-3">
+                                  <div className="text-[9px] text-white/30 uppercase font-semibold tracking-wider">Token</div>
+                                  <div className="text-xs font-semibold text-blue-300 mt-0.5">{t.token_number}</div>
+                                  <div className="text-[10px] text-white/35">Priority: {t.priority}</div>
+                                </div>
+                                <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-3">
+                                  <div className="text-[9px] text-white/30 uppercase font-semibold tracking-wider">Date</div>
+                                  <div className="text-xs font-medium text-white/80 mt-0.5">{new Date(t.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</div>
+                                  <div className="text-[10px] text-white/35">{new Date(t.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</div>
+                                </div>
+                                <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-3">
+                                  <div className="text-[9px] text-white/30 uppercase font-semibold tracking-wider">Est. Wait</div>
+                                  {t.status === "serving" ? (
+                                    <div className="text-xs font-semibold text-emerald-400 mt-0.5">Your turn!</div>
+                                  ) : t.status === "waiting" ? (
+                                    <div className="text-xs font-semibold text-amber-400 mt-0.5">
+                                      {t.estimated_wait_minutes === 0 ? "You're next!" : `~${t.estimated_wait_minutes ?? 0} min`}
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs font-medium text-white/50 mt-0.5">
+                                      {t.completed_at ? new Date(t.completed_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—"}
+                                    </div>
+                                  )}
+                                  <div className="text-[10px] text-white/35">{t.status === "done" ? "Completed" : "Live estimate"}</div>
+                                </div>
+                              </div>
+                              {t.status === "serving" && (
+                                <div className="rounded-lg border border-blue-500/20 bg-blue-500/8 p-3 text-center">
+                                  <div className="text-xs font-semibold text-blue-300">Please proceed to the doctor's cabin</div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <ChevronRight className="h-4 w-4 text-white/20" />
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
