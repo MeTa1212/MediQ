@@ -481,7 +481,7 @@ export function usePatientQueue() {
     void fetchMyReminders();
   }, [profile?.id, fetchMyTokens, fetchMyPrescriptions, fetchMyReminders]);
 
-  // Real-time subscription: re-fetch tokens when ANY token changes (Issue 1)
+  // Real-time subscription: re-fetch tokens and prescriptions (Issue 1 & 6)
   useEffect(() => {
     if (!profile?.id) return;
 
@@ -494,12 +494,19 @@ export function usePatientQueue() {
           void fetchMyTokens();
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "prescriptions" },
+        () => {
+          void fetchMyPrescriptions();
+        }
+      )
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [profile?.id, fetchMyTokens]);
+  }, [profile?.id, fetchMyTokens, fetchMyPrescriptions]);
 
   return {
     bookToken,
