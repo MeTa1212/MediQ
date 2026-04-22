@@ -1,5 +1,7 @@
-import { Play, SkipForward, CheckCircle2, FileText } from "lucide-react";
+import { useState } from "react";
+import { Play, SkipForward, CheckCircle2, FileText, History } from "lucide-react";
 import type { QueuePatient } from "@/hooks/useQueue";
+import { PatientHistoryPanel } from "@/components/doctor/PatientHistoryPanel";
 const PRIORITYMETA: Record<"critical" | "normal" | "low", string> = {
   critical: "bg-red-500/10 text-red-400 border border-red-500/20",
   normal: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
@@ -42,6 +44,8 @@ export function QueueTab({
   onSkip,
   onComplete,
 }: QueueTabProps) {
+  const [historyPatient, setHistoryPatient] = useState<{ id: string; name: string; tokenId?: string } | null>(null);
+
   return (
     <div className="space-y-6 animate-fade-up">
       <div className="flex items-center justify-between">
@@ -85,6 +89,14 @@ export function QueueTab({
               >
                 <FileText className="h-4 w-4" />
                 Prescribe
+              </button>
+
+              <button
+                onClick={() => setHistoryPatient({ id: serving.patient_id, name: serving.patient_name, tokenId: serving.id })}
+                className="inline-flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-400 transition-colors hover:bg-amber-500/15"
+              >
+                <History className="h-4 w-4" />
+                History
               </button>
 
               <button
@@ -144,30 +156,38 @@ export function QueueTab({
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <select
-                      value={p.priority}
-                      onChange={(e) =>
-                        onChangePriority(
-                          p.id,
-                          e.target.value as "critical" | "normal" | "low"
-                        )
-                      }
-                      className="rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground outline-none"
-                    >
-                      <option value="critical">Critical</option>
-                      <option value="normal">Normal</option>
-                      <option value="low">Low</option>
-                    </select>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <select
+                        value={p.priority}
+                        onChange={(e) =>
+                          onChangePriority(
+                            p.id,
+                            e.target.value as "critical" | "normal" | "low"
+                          )
+                        }
+                        className="rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground outline-none"
+                      >
+                        <option value="critical">Critical</option>
+                        <option value="normal">Normal</option>
+                        <option value="low">Low</option>
+                      </select>
 
-                    <button
-                      onClick={() => onSkip(p.id)}
-                      className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary/80"
-                    >
-                      <SkipForward className="h-3.5 w-3.5" />
-                      Skip
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => setHistoryPatient({ id: p.patient_id, name: p.patient_name, tokenId: p.id })}
+                        className="inline-flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/15"
+                      >
+                        <History className="h-3.5 w-3.5" />
+                        History
+                      </button>
+
+                      <button
+                        onClick={() => onSkip(p.id)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary/80"
+                      >
+                        <SkipForward className="h-3.5 w-3.5" />
+                        Skip
+                      </button>
+                    </div>
                 </div>
               ))
             )}
@@ -218,6 +238,15 @@ export function QueueTab({
           </div>
         </div>
       </div>
+
+      {historyPatient && (
+        <PatientHistoryPanel
+          patientId={historyPatient.id}
+          patientName={historyPatient.name}
+          tokenId={historyPatient.tokenId}
+          onClose={() => setHistoryPatient(null)}
+        />
+      )}
     </div>
   );
 }
