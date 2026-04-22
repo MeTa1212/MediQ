@@ -20,8 +20,9 @@ export default function DoctorLogin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, logout } = useAuth();
+  const normalizedPath = location.pathname.replace(/\/$/, "");
   const isAdminLogin =
-    location.pathname === "/admin/login" || location.pathname === "/login/admin";
+    normalizedPath === "/admin/login" || normalizedPath === "/login/admin";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
